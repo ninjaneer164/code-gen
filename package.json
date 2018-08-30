@@ -1,0 +1,26 @@
+{
+    "name": "code-gen",
+    "version": "0.1.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha --reporter nyan"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ninjaneer164/code-gen.git"
+    },
+    "author": "Hiroshi Miyazawa <ninjaneer164@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ninjaneer164/code-gen/issues"
+    },
+    "homepage": "https://github.com/ninjaneer164/code-gen#readme",
+    "engines": {
+        "node": ">=4.2.4"
+    },
+    "devDependencies": {
+        "chai": "^4.1.2",
+        "mocha": "^5.2.0"
+    }
+}
