@@ -1,9 +1,7 @@
 'use strict';
 
 var SPACE = ' ';
-var TAB = (new Array(4)).map(() => {
-    return '';
-}).join(SPACE);
+var TAB = '    ';
 
 var _isNullOrUndefined = (o) => {
     return ((o === null) || (o === undefined));
@@ -72,7 +70,7 @@ class Base {
 }
 
 class BaseClass extends Base {
-    constructor(d, options) {
+    constructor(data, options) {
         super(options);
 
         this.extends = '';
@@ -81,49 +79,31 @@ class BaseClass extends Base {
         this.name = '';
         this.properties = [];
 
-        if (d.extends !== undefined) {
-            this.extends = d.extends;
+        if (data.extends !== undefined) {
+            this.extends = data.extends;
         }
-        if (d.import !== undefined) {
-            this.import = d.import;
+        if (data.import !== undefined) {
+            this.import = data.import;
         }
-        if (d.methods !== undefined) {
-            this.methods = d.methods.map((m) => {
+        if (data.methods !== undefined) {
+            this.methods = data.methods.map((m) => {
                 return new Method(m, options);
             });
         }
-        if (d.properties !== undefined) {
-            this.properties = d.properties.map((p) => {
+        if (data.properties !== undefined) {
+            this.properties = data.properties.map((p) => {
                 return new Property(p, options);
             });
         }
-        if (d.name !== undefined) {
-            this.name = d.name;
+        if (data.name !== undefined) {
+            this.name = data.name;
         }
-    }
-
-    getImportString(im) {
-        if (im === undefined) {
-            im = this.import;
-        }
-        var m = new Map();
-        im.forEach(i => {
-            var a = m.has(i.path) ? m.get(i.path) : [];
-            a.push(i.name);
-            m.set(i.path, a);
-        });
-        var i = [];
-        m.forEach((a, p) => {
-            i.push(`import${this.space}{${this.space}${a.join(`,${this.space}`)}${this.space}}${this.space}from${this.space}'${p}';`);
-        });
-
-        return this.formatStringArray(i, this.prettify);
     }
 }
 
 class Class extends BaseClass {
-    constructor(c, options) {
-        super(c, options);
+    constructor(data, options) {
+        super(data, options);
 
         this.args = [];
         this.constructorCode = '';
@@ -132,47 +112,47 @@ class Class extends BaseClass {
         this.properties = [];
         this.superArgs = [];
 
-        if (c.args !== undefined) {
-            this.args = c.args.map((a) => {
+        if (data.args !== undefined) {
+            this.args = data.args.map((a) => {
                 return new Property(a, options);
             });
         }
-        if (c.isBaseClass !== undefined) {
-            this.isBaseClass = c.isBaseClass;
+        if (data.isBaseClass !== undefined) {
+            this.isBaseClass = data.isBaseClass;
         }
-        if (c.constructorCode !== undefined) {
-            this.constructorCode = c.constructorCode;
+        if (data.constructorCode !== undefined) {
+            this.constructorCode = data.constructorCode;
         }
-        if (c.implements !== undefined) {
-            this.implements = c.implements;
+        if (data.implements !== undefined) {
+            this.implements = data.implements;
         }
-        if (c.properties !== undefined) {
-            this.properties = c.properties.map((p) => {
+        if (data.properties !== undefined) {
+            this.properties = data.properties.map((p) => {
                 return new Property(p, options);
             });
         }
-        if (c.superArgs !== undefined) {
-            this.superArgs = c.superArgs.map((a) => {
+        if (data.superArgs !== undefined) {
+            this.superArgs = data.superArgs.map((a) => {
                 return new Property(a, options);
             });
         }
     }
 
-    getImportString() {
-        return super.getImportString(this.import);
-    }
     toString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var s = [];
         var b = this.isBaseClass ? '' : 'Base';
         var e = _isNullOrEmpty(this.extends) ? '' : ` extends ${this.extends}`;
-        var i =
-            this.implements.length === 0
-                ? ''
-                : ` implements ${this.implements.join(`,${this.space}`)}`;
+        var i = (this.implements.length === 0)
+            ? ''
+            : ` implements ${this.implements.join(`,${this.space}`)}`;
 
-        s.push(`export class ${this.name}${b}${e}${i} {`);
+        s.push(`export class ${this.name}${b}${e}${i}${this.space}{`);
 
         var _ = (a, prettify) => {
             return this.formatStringArray(
@@ -241,7 +221,7 @@ class Class extends BaseClass {
 }
 
 class Enum extends Base {
-    constructor(e, options) {
+    constructor(data, options) {
         super(options);
 
         this.enums = [];
@@ -249,34 +229,38 @@ class Enum extends Base {
         this.names = [];
         this.values = [];
 
-        if (e !== undefined) {
-            if (e.name !== undefined) {
-                this.name = e.name;
-            }
-            if (e.names !== undefined) {
-                var vals = (e.values !== undefined && Array.isArray(e.values))
-                    ? e.names.map((n, i) => {
-                        return i < e.values.length ? e.values[i] : '';
-                    })
-                    : e.names.map((n) => {
-                        return '';
-                    });
-                this.enums = e.names.map((n, i) => {
-                    return new EnumItem({
-                        name: n,
-                        value: vals[i],
-                    });
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+        if (data.names !== undefined) {
+            this.names = data.names;
+
+            this.values = (data.values !== undefined && Array.isArray(data.values))
+                ? data.names.map((n, i) => {
+                    return (i < data.values.length) ? data.values[i] : '';
+                })
+                : data.names.map((n) => {
+                    return '';
                 });
-            }
+            this.enums = data.names.map((n, i) => {
+                return new EnumItem({
+                    name: n,
+                    value: this.values[i],
+                });
+            });
         }
     }
 
     toString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var s = [];
 
-        s.push(`export enum ${this.name} {`);
+        s.push(`export enum ${this.name}${this.space}{`);
 
         var e = [];
         this.enums.forEach((e_) => {
@@ -300,13 +284,13 @@ class Enum extends Base {
 }
 
 class EnumItem extends Base {
-    constructor(e) {
+    constructor(data) {
         super();
 
         this.name = '';
         this.value = '';
 
-        _parseObject(e, this);
+        _parseObject(data, this);
     }
 
     toString(prettify) {
@@ -319,17 +303,21 @@ class EnumItem extends Base {
 }
 
 class Interface extends BaseClass {
-    constructor(i, options) {
-        super(i, options);
+    constructor(data, options) {
+        super(data, options);
     }
 
     toString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var s = [];
         var e = _isNullOrEmpty(this.extends) ? '' : ` extends ${this.extends}`;
 
-        s.push(`export interface ${this.name}${e} {`);
+        s.push(`export interface ${this.name}${e}${this.space}{`);
         s.push(
             this.formatStringArray(
                 this.properties.map((p) => {
@@ -353,7 +341,7 @@ class Interface extends BaseClass {
 }
 
 class Method extends Base {
-    constructor(m, options) {
+    constructor(data, options) {
         super(options);
 
         this.args = [];
@@ -363,28 +351,36 @@ class Method extends Base {
         this.static = false;
         this.type = 'void';
 
-        if (m !== undefined) {
-            _parseObject(m, this);
-        }
-        if (m.args !== undefined) {
-            this.args = m.args.map((a) => {
+        _parseObject(data, this);
+
+        if (data.args !== undefined) {
+            this.args = data.args.map((a) => {
                 return new Property(a, options);
             });
         }
     }
 
     toInterfaceString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var a = this.args
             .map((a_) => {
-                return `${a_.name}:${this.space}${a_.type}`;
+                var o = (a_.optional === true) ? '?' : '';
+                return `${a_.name}${o}:${this.space}${a_.type}`;
             })
             .join(`,${this.space}`);
 
         return `${this.tab}${this.name}(${a}):${this.space}${this.type};`;
     }
     toString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var s = [];
@@ -404,7 +400,7 @@ class Method extends Base {
 }
 
 class Property extends Base {
-    constructor(p, options) {
+    constructor(data, options) {
         super(options);
 
         this.inferType = false;
@@ -427,12 +423,16 @@ class Property extends Base {
         this.value = 'null';
         this.write = true;
 
-        if (p !== undefined) {
-            _parseObject(p, this);
+        if (data !== undefined) {
+            _parseObject(data, this);
         }
     }
 
     toArgString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var o = this.optional ? '?' : '';
@@ -440,6 +440,10 @@ class Property extends Base {
         return `${this.name}${o}:${this.space}${this.type}`;
     }
     toInterfaceString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var o = this.optional ? '?' : '';
@@ -447,6 +451,10 @@ class Property extends Base {
         return `${this.tab}${this.name}${o}:${this.space}${this.type};`;
     }
     toString(prettify) {
+        if (_isNullOrEmpty(this.name)) {
+            return '';
+        }
+
         super.toString(prettify);
 
         var s = [];
@@ -460,7 +468,7 @@ class Property extends Base {
         }
         if (this.write === true) {
             var w = `${this.tab}${this.modifier} set ${this.name}(value:${this.space}${this.type})${this.space}{${this.space}this._${this.name}${this.space}=${this.space}value;`;
-            if (this.track) {
+            if (this.track === true) {
                 var d = (this.options.isDirty !== undefined)
                     ? this.options.isDirty
                     : '_isDirty';
@@ -557,5 +565,7 @@ class CodeGen extends Base {
 
 module.exports = {
     Modifier: Modifier,
-    CodeGen: CodeGen
+    CodeGen: (d) => {
+        return new CodeGen(d);
+    }
 };

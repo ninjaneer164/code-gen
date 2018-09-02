@@ -23,14 +23,14 @@ describe('code-gen-ts', function () {
 
     describe('#default', function () {
 
-        var cg0 = new cg();
-        var cg1 = new cg({
+        var cg0 = cg();
+        var cg1 = cg({
             options: {
                 prettify: true,
                 tabSize: 4,
             }
         });
-        var cg2 = new cg({
+        var cg2 = cg({
             options: {
                 prettify: false,
                 tabSize: 2,
@@ -42,8 +42,8 @@ describe('code-gen-ts', function () {
             expect(cg1.space).to.equal(' ');
         });
         it('tab should be "    "', function () {
-            expect(cg0.tab).to.equal('   ');
-            expect(cg1.tab).to.equal('   ');
+            expect(cg0.tab).to.equal('    ');
+            expect(cg1.tab).to.equal('    ');
         });
         it('prettify should be true/false', function () {
             expect(cg0.prettify).to.equal(true);
@@ -72,9 +72,175 @@ describe('code-gen-ts', function () {
         });
     });
 
+    describe('#coverage', function () {
+        it('CodeGen', function () {
+            var o = {
+                options: {
+                    inferType: false,
+                    isDirty: '_isDirty',
+                    lastUpdated: '_lastUpdated'
+                },
+                enums: [
+                    {},
+                    {
+                        name: 'Foo'
+                    },
+                    {
+                        name: 'Bar',
+                        names: ['foo', 'bar'],
+                        values: []
+                    },
+                    {
+                        name: 'Bar',
+                        names: ['foo', 'bar'],
+                        values: [1]
+                    },
+                    {
+                        names: ['foo', 'bar']
+                    },
+                    {
+                        names: ['foo', 'bar'],
+                        values: []
+                    },
+                    {
+                        names: ['foo', 'bar'],
+                        values: ['1']
+                    }
+                ],
+                interfaces: [
+                    {},
+                    {
+                        name: 'Foo'
+                    },
+                    {
+                        name: 'Foo',
+                        extends: 'Bar',
+                        import: [
+                            {
+                                name: 'Foo',
+                                path: '@angular/core'
+                            },
+                            {
+                                name: 'Bar',
+                                path: '@angular/core'
+                            }
+                        ],
+                        properties: [
+                            {},
+                            {
+                                name: 'foo'
+                            },
+                            {
+                                name: 'bar',
+                                optional: true
+                            }
+                        ],
+                        methods: [
+                            {},
+                            {
+                                name: 'foo',
+                                args: [
+                                    {
+                                        name: 'foo',
+                                        type: 'any'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                classes: [
+                    {},
+                    {
+                        properties: [
+                            undefined
+                        ]
+                    },
+                    {
+                        name: 'Foo'
+                    },
+                    {
+                        name: 'Bar',
+                        isBaseClass: true
+                    },
+                    {
+                        name: 'Bar',
+                        extends: 'Foo',
+                        implements: ['Foo'],
+                        import: [{
+                            name: 'Foo',
+                            path: '@angular/core'
+                        }],
+                        isBaseClass: false,
+                        args: [
+                            {},
+                            {
+                                name: 'foo'
+                            },
+                            {
+                                name: 'bar',
+                                optional: true
+                            }
+                        ],
+                        superArgs: [
+                            {
+                                name: 'foo'
+                            }
+                        ],
+                        constructorCode: 'hello world',
+                        properties: [
+                            {},
+                            {
+                                name: 'foo',
+                                track: true
+                            },
+                            {
+                                name: 'bar',
+                                declare: false,
+                                static: true,
+                                read: false,
+                                write: false
+                            }, {
+                                name: 'foo',
+                                track: false
+                            }
+                        ],
+                        methods: [
+                            {},
+                            {
+                                name: 'foo',
+                                args: [
+                                    {
+                                        name: 'foo',
+                                        type: 'any'
+                                    }
+                                ]
+                            },
+                            {
+                                name: 'bar',
+                                static: true
+                            }
+                        ]
+                    }
+                ]
+            };
+            cg(o).generate();
+
+            o.options = {
+                prettify: false
+            };
+            cg(o).generate();
+
+            o.options = {
+                prettify: undefined
+            };
+            cg(o).generate();
+        });
+    });
+
     describe('#base-classes', function () {
 
-        var z = new cg({
+        var z = cg({
             classes: [
                 {
                     name: 'BaseClass',
@@ -143,120 +309,344 @@ describe('code-gen-ts', function () {
         });
     });
 
-    describe('#coverage', function () {
+    describe('#enum', function () {
 
-        var __ = (c, n, a) => {
-            var o = {};
-            var oo = {};
-            var b = ['extends', 'import', 'names'].includes(n);
-            if (n === 'name') {
-                oo[n] = a[0];
-            } else {
-                oo[n] = a.map((a_) => {
-                    if (b === true) {
-                        return a_;
-                    }
-                    return {
-                        name: a_
-                    };
-                });
-            }
-            o[c] = [oo];
-
-            var z = new cg(o);
-
-            console.log(z);
-
-            return {
-                length: z[c][0][n].length,
-                value: z[c][0][n].map((n_) => {
-                    if (b === true) {
-                        return n_;
-                    }
-                    return n_.name;
-                }).join()
-            };
+        var options = {
+            prettify: false
         };
 
-        describe('#coverage-BaseClass', function () {
-            it('should have name "Foo"', function () {
-                var a = ['foo'];
-                var z = __('classes', 'name', a);
-                expect(z.length).to.equal(1);
-                expect(z.value).to.equal(a[0]);
+        it('should return empty string', function () {
+            var z = cg({
+                options,
+                enums: [
+                    {
+                        names: ['foo', 'bar']
+                    }
+                ]
             });
-            it('should extend "Foo"', function () {
-                var a = ['foo'];
-                var z = __('classes', 'extends', a);
-                expect(z.length).to.equal(1);
-                expect(z.value).to.equal(a[0]);
-            });
-            it('should import "Foo" and "Bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'import', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
-            it('should have methods "Foo" and "Bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'methods', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
-            it('should have properties "foo" and "bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'properties', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
+            var g = z.generate();
+            expect(g.output).to.equal('');
         });
-
-        describe('#coverage-Class', function () {
-            it('should have args "foo" and "bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'args', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
+        it('should return empty enum', function () {
+            var z = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo'
+                    }
+                ]
             });
-            it('should have constructorCode "console.log(\'hello world\');"', function () {
-                var a = ['console.log(\'hello world\');'];
-                var z = __('classes', 'constructorCode', a);
-                expect(z.length).to.equal(1);
-                expect(z.value).to.equal(a[0]);
-            });
-            it('should have args "foo" and "bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'implements', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
-            it('should have args "foo" and "bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'properties', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
-            it('should have args "foo" and "bar', function () {
-                var a = ['foo', 'bar'];
-                var z = __('classes', 'superArgs', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
-            });
+            var g = z.generate();
+            expect(g.output).to.equal('export enum Foo{}');
         });
+        it('should return simple enum', function () {
+            var z = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar']
+                    }
+                ]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export enum Foo{foo,bar}');
+        });
+        it('should return number enum', function () {
+            var z = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar'],
+                        values: [1]
+                    }
+                ]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export enum Foo{foo=1,bar}');
+        });
+        it('should return string enum', function () {
+            var z = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar'],
+                        values: ['\'foo\'', '\'bar\'']
+                    }
+                ]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export enum Foo{foo=\'foo\',bar=\'bar\'}');
+        });
+    });
 
-        describe('#coverage-Enum', function () {
-            it('should have name "Foo"', function () {
-                var a = ['Foo'];
-                var z = __('enums', 'name', a);
-                expect(z.length).to.equal(1);
-                expect(z.value).to.equal(a[0]);
+    describe('#interface', function () {
+
+        var options = {
+            prettify: false
+        };
+
+        it('should return empty string', function () {
+            var z = cg({
+                options,
+                interfaces: [{}]
             });
-            it('should have enums "foo" and "bar"', function () {
-                var a = ['foo', 'bar'];
-                var z = __('enums', 'names', a);
-                expect(z.length).to.equal(2);
-                expect(z.value).to.equal(a.join());
+            var g = z.generate();
+            expect(g.output).to.equal('');
+        });
+        it('should return empty interface', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo'
+                }]
             });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{}');
+        });
+        it('should return interface with property "foo"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo:any;}');
+        });
+        it('should return interface with property "foo" of type "string"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            type: 'string'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo:string;}');
+        });
+        it('should return interface with optional property "foo"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            optional: true
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo?:any;}');
+        });
+        it('should return interface with method "foo"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo():void;}');
+        });
+        it('should return interface with method "foo" of type "string"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo():string;}');
+        });
+        it('should return interface with method "foo" of type "string", arg "bar"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string',
+                            args: [
+                                {
+                                    name: 'bar'
+                                }
+                            ]
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo(bar:any):string;}');
+        });
+        it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string',
+                            args: [
+                                {
+                                    name: 'bar',
+                                    type: 'boolean'
+                                }
+                            ]
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo(bar:boolean):string;}');
+        });
+        it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function () {
+            var z = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string',
+                            args: [
+                                {
+                                    name: 'bar',
+                                    type: 'boolean',
+                                    optional: true
+                                }
+                            ]
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo(bar?:boolean):string;}');
+        });
+    });
+
+    describe('#class', function () {
+
+        var options = {
+            prettify: false
+        };
+
+        it('should return empty string', function () {
+            var z = cg({
+                options,
+                classes: [{}]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('');
+        });
+        it('should return empty class "Foo"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo'
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase{constructor(){}}');
+        });
+        it('should return class "Foo", extends "Bar"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar'
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase extends Bar{constructor(){super();this._className=\'Foo\';}}');
+        });
+        it('should return class "Foo", implements "Bar"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    implements: ['Bar']
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase implements Bar{constructor(){}}');
+        });
+        it('should return class "Foo", implements "Bar" and "Bar2"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    implements: ['Bar', 'Bar2']
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase implements Bar,Bar2{constructor(){}}');
+        });
+        it('should return class "Foo", extends "Bar", implements "Bar2"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar',
+                    implements: ['Bar2']
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase extends Bar implements Bar2{constructor(){super();this._className=\'Foo\';}}');
+        });
+        it('should return class "Foo", arg "foo"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    args: [{
+                        name: 'foo'
+                    }]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase{constructor(foo:any){}}');
+        });
+        it('should return class "Foo", extends "Bar", super arg "foo"', function () {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar',
+                    superArgs: [{
+                        name: 'foo'
+                    }]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class FooBase extends Bar{constructor(){super(foo);this._className=\'Foo\';}}');
         });
     });
 });
