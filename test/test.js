@@ -203,6 +203,11 @@ describe('code-gen-ts', function () {
                             }, {
                                 name: 'foo',
                                 track: false
+                            }, {
+                                name: 'foo',
+                                track: true,
+                                trackDate: false,
+                                trackState: false
                             }
                         ],
                         methods: [
