@@ -419,6 +419,8 @@ class Property extends Base {
         this.read = true;
         this.static = false;
         this.track = false;
+        this.trackDate = true;
+        this.trackState = true;
         this.type = 'any';
         this.value = 'null';
         this.write = true;
@@ -469,13 +471,19 @@ class Property extends Base {
         if (this.write === true) {
             var w = `${this.tab}${this.modifier} set ${this.name}(value:${this.space}${this.type})${this.space}{${this.space}this._${this.name}${this.space}=${this.space}value;`;
             if (this.track === true) {
-                var d = (this.options.isDirty !== undefined)
-                    ? this.options.isDirty
-                    : '_isDirty';
-                var l = (this.options.lastUpdated !== undefined)
-                    ? this.options.lastUpdated
-                    : '_lastUpdated';
-                w += `${this.space}this.${d}${this.space}=${this.space}true;${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();`;
+                var d = (this.trackState === true)
+                    ? (this.options.isDirty !== undefined)
+                        ? this.options.isDirty
+                        : '_isDirty'
+                    : '';
+                var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;` : '';
+                var l = (this.trackDate === true)
+                    ? (this.options.lastUpdated !== undefined)
+                        ? this.options.lastUpdated
+                        : '_lastUpdated'
+                    : '';
+                var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();` : '';
+                w += `${dd}${ll}`;
             }
             w += `${this.space}}`;
             s.push(w);
