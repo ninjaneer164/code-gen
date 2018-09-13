@@ -146,13 +146,12 @@ class Class extends BaseClass {
         super.toString(prettify);
 
         var s = [];
-        var b = this.isBaseClass ? '' : 'Base';
         var e = _isNullOrEmpty(this.extends) ? '' : ` extends ${this.extends}`;
         var i = (this.implements.length === 0)
             ? ''
             : ` implements ${this.implements.join(`,${this.space}`)}`;
 
-        s.push(`export class ${this.name}${b}${e}${i}${this.space}{`);
+        s.push(`export class ${this.name}${e}${i}${this.space}{`);
 
         var _ = (a, prettify) => {
             return this.formatStringArray(

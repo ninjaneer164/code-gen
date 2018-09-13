@@ -579,7 +579,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase{constructor(){}}');
+            expect(g.output).to.equal('export class Foo{constructor(){}}');
         });
         it('should return class "Foo", extends "Bar"', function() {
             var z = cg({
@@ -590,7 +590,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase extends Bar{constructor(){super();this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super();this._className=\'Foo\';}}');
         });
         it('should return class "Foo", implements "Bar"', function() {
             var z = cg({
@@ -601,7 +601,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase implements Bar{constructor(){}}');
+            expect(g.output).to.equal('export class Foo implements Bar{constructor(){}}');
         });
         it('should return class "Foo", implements "Bar" and "Bar2"', function() {
             var z = cg({
@@ -612,7 +612,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase implements Bar,Bar2{constructor(){}}');
+            expect(g.output).to.equal('export class Foo implements Bar,Bar2{constructor(){}}');
         });
         it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
             var z = cg({
@@ -624,7 +624,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase extends Bar implements Bar2{constructor(){super();this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar implements Bar2{constructor(){super();this._className=\'Foo\';}}');
         });
         it('should return class "Foo", arg "foo"', function() {
             var z = cg({
@@ -637,7 +637,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase{constructor(foo:any){}}');
+            expect(g.output).to.equal('export class Foo{constructor(foo:any){}}');
         });
         it('should return class "Foo", extends "Bar", super arg "foo"', function() {
             var z = cg({
@@ -651,7 +651,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class FooBase extends Bar{constructor(){super(foo);this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);this._className=\'Foo\';}}');
         });
     });
 });
