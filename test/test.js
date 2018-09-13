@@ -4,24 +4,24 @@ var expect = require('chai').expect;
 var cg = require('../index').CodeGen;
 var Modifier = require('../index').Modifier;
 
-describe('code-gen-ts', function () {
+describe('code-gen-ts', function() {
 
-    describe('#Modifier', function () {
-        it('should have PRIVATE', function () {
+    describe('#Modifier', function() {
+        it('should have PRIVATE', function() {
             expect(Modifier).to.haveOwnProperty('PRIVATE');
             expect(Modifier.PRIVATE).to.equal('private');
         });
-        it('should have PROTECTED', function () {
+        it('should have PROTECTED', function() {
             expect(Modifier).to.haveOwnProperty('PROTECTED');
             expect(Modifier.PROTECTED).to.equal('protected');
         });
-        it('should have PUBLIC', function () {
+        it('should have PUBLIC', function() {
             expect(Modifier).to.haveOwnProperty('PUBLIC');
             expect(Modifier.PUBLIC).to.equal('public');
         });
     });
 
-    describe('#default', function () {
+    describe('#default', function() {
 
         var cg0 = cg();
         var cg1 = cg({
@@ -37,43 +37,43 @@ describe('code-gen-ts', function () {
             }
         });
 
-        it('sapce should be " "', function () {
+        it('sapce should be " "', function() {
             expect(cg0.space).to.equal(' ');
             expect(cg1.space).to.equal(' ');
         });
-        it('tab should be "    "', function () {
+        it('tab should be "    "', function() {
             expect(cg0.tab).to.equal('    ');
             expect(cg1.tab).to.equal('    ');
         });
-        it('prettify should be true/false', function () {
+        it('prettify should be true/false', function() {
             expect(cg0.prettify).to.equal(true);
             expect(cg1.prettify).to.equal(true);
             expect(cg2.prettify).to.equal(false);
         });
-        it('tabSize should be 4/2', function () {
+        it('tabSize should be 4/2', function() {
             expect(cg0.tabSize).to.equal(4);
             expect(cg1.tabSize).to.equal(4);
             expect(cg2.tabSize).to.equal(2);
         });
-        it('clases should be empty', function () {
+        it('clases should be empty', function() {
             expect(cg0.classes.length).to.equal(0);
             expect(cg1.classes.length).to.equal(0);
             expect(cg2.classes.length).to.equal(0);
         });
-        it('enums should be empty', function () {
+        it('enums should be empty', function() {
             expect(cg0.enums.length).to.equal(0);
             expect(cg1.enums.length).to.equal(0);
             expect(cg2.enums.length).to.equal(0);
         });
-        it('interfaces should be empty', function () {
+        it('interfaces should be empty', function() {
             expect(cg0.interfaces.length).to.equal(0);
             expect(cg1.interfaces.length).to.equal(0);
             expect(cg2.interfaces.length).to.equal(0);
         });
     });
 
-    describe('#coverage', function () {
-        it('CodeGen', function () {
+    describe('#coverage', function() {
+        it('CodeGen', function() {
             var o = {
                 options: {
                     inferType: false,
@@ -243,7 +243,7 @@ describe('code-gen-ts', function () {
         });
     });
 
-    describe('#base-classes', function () {
+    describe('#base-classes', function() {
 
         var z = cg({
             classes: [
@@ -293,34 +293,34 @@ describe('code-gen-ts', function () {
         var c0 = z.classes[0];
         var c1 = z.classes[1];
 
-        it('should have 2 classes', function () {
+        it('should have 2 classes', function() {
             expect(z.classes.length).greaterThan(0);
             expect(z.classes.length).equals(2);
         });
-        it('should have "BaseClass" and "BaseModel"', function () {
+        it('should have "BaseClass" and "BaseModel"', function() {
             expect(c0.name).to.equal('BaseClass');
             expect(c1.name).to.equal('BaseModel');
         });
 
         // BaseClass
-        it('should be base class', function () {
+        it('should be base class', function() {
             expect(c0.isBaseClass).to.equal(true);
             expect(c0.isBaseClass).to.equal(true);
         });
 
         // BaseModel
-        it('should extend BaseClass', function () {
+        it('should extend BaseClass', function() {
             expect(c1.extends).to.equal('BaseClass');
         });
     });
 
-    describe('#enum', function () {
+    describe('#enum', function() {
 
         var options = {
             prettify: false
         };
 
-        it('should return empty string', function () {
+        it('should return empty string', function() {
             var z = cg({
                 options,
                 enums: [
@@ -332,7 +332,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('');
         });
-        it('should return empty enum', function () {
+        it('should return empty enum', function() {
             var z = cg({
                 options,
                 enums: [
@@ -344,7 +344,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export enum Foo{}');
         });
-        it('should return simple enum', function () {
+        it('should return simple enum', function() {
             var z = cg({
                 options,
                 enums: [
@@ -357,7 +357,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export enum Foo{foo,bar}');
         });
-        it('should return number enum', function () {
+        it('should return number enum', function() {
             var z = cg({
                 options,
                 enums: [
@@ -371,7 +371,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export enum Foo{foo=1,bar}');
         });
-        it('should return string enum', function () {
+        it('should return string enum', function() {
             var z = cg({
                 options,
                 enums: [
@@ -387,13 +387,13 @@ describe('code-gen-ts', function () {
         });
     });
 
-    describe('#interface', function () {
+    describe('#interface', function() {
 
         var options = {
             prettify: false
         };
 
-        it('should return empty string', function () {
+        it('should return empty string', function() {
             var z = cg({
                 options,
                 interfaces: [{}]
@@ -401,7 +401,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('');
         });
-        it('should return empty interface', function () {
+        it('should return empty interface', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -411,7 +411,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{}');
         });
-        it('should return interface with property "foo"', function () {
+        it('should return interface with property "foo"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -426,7 +426,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo:any;}');
         });
-        it('should return interface with property "foo" of type "string"', function () {
+        it('should return interface with property "foo" of type "string"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -442,7 +442,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo:string;}');
         });
-        it('should return interface with optional property "foo"', function () {
+        it('should return interface with optional property "foo"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -458,7 +458,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo?:any;}');
         });
-        it('should return interface with method "foo"', function () {
+        it('should return interface with method "foo"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -473,7 +473,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo():void;}');
         });
-        it('should return interface with method "foo" of type "string"', function () {
+        it('should return interface with method "foo" of type "string"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -489,7 +489,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo():string;}');
         });
-        it('should return interface with method "foo" of type "string", arg "bar"', function () {
+        it('should return interface with method "foo" of type "string", arg "bar"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -510,7 +510,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo(bar:any):string;}');
         });
-        it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function () {
+        it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -532,7 +532,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export interface Foo{foo(bar:boolean):string;}');
         });
-        it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function () {
+        it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function() {
             var z = cg({
                 options,
                 interfaces: [{
@@ -557,13 +557,13 @@ describe('code-gen-ts', function () {
         });
     });
 
-    describe('#class', function () {
+    describe('#class', function() {
 
         var options = {
             prettify: false
         };
 
-        it('should return empty string', function () {
+        it('should return empty string', function() {
             var z = cg({
                 options,
                 classes: [{}]
@@ -571,7 +571,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('');
         });
-        it('should return empty class "Foo"', function () {
+        it('should return empty class "Foo"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -581,7 +581,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase{constructor(){}}');
         });
-        it('should return class "Foo", extends "Bar"', function () {
+        it('should return class "Foo", extends "Bar"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -592,7 +592,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase extends Bar{constructor(){super();this._className=\'Foo\';}}');
         });
-        it('should return class "Foo", implements "Bar"', function () {
+        it('should return class "Foo", implements "Bar"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -603,7 +603,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase implements Bar{constructor(){}}');
         });
-        it('should return class "Foo", implements "Bar" and "Bar2"', function () {
+        it('should return class "Foo", implements "Bar" and "Bar2"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -614,7 +614,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase implements Bar,Bar2{constructor(){}}');
         });
-        it('should return class "Foo", extends "Bar", implements "Bar2"', function () {
+        it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -626,7 +626,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase extends Bar implements Bar2{constructor(){super();this._className=\'Foo\';}}');
         });
-        it('should return class "Foo", arg "foo"', function () {
+        it('should return class "Foo", arg "foo"', function() {
             var z = cg({
                 options,
                 classes: [{
@@ -639,7 +639,7 @@ describe('code-gen-ts', function () {
             var g = z.generate();
             expect(g.output).to.equal('export class FooBase{constructor(foo:any){}}');
         });
-        it('should return class "Foo", extends "Bar", super arg "foo"', function () {
+        it('should return class "Foo", extends "Bar", super arg "foo"', function() {
             var z = cg({
                 options,
                 classes: [{

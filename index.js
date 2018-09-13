@@ -345,7 +345,7 @@ class Method extends Base {
         super(options);
 
         this.args = [];
-        this.code = 'return;';
+        this.body = 'return;';
         this.modifier = Modifier.PUBLIC;
         this.name = '';
         this.static = false;
@@ -392,7 +392,7 @@ class Method extends Base {
             .join(`,${this.space}`);
 
         s.push(`${this.tab}${this.modifier}${t} ${this.name}${this.space}(${a}):${this.space}${this.type}${this.space}{`);
-        s.push(`${this.tab}${this.tab}${this.code}`);
+        s.push(`${this.tab}${this.tab}${this.body}`);
         s.push(`${this.tab}}`);
 
         return this.formatStringArray(s, prettify);
