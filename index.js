@@ -317,22 +317,28 @@ class Interface extends BaseClass {
         var e = _isNullOrEmpty(this.extends) ? '' : ` extends ${this.extends}`;
 
         s.push(`export interface ${this.name}${e}${this.space}{`);
-        s.push(
-            this.formatStringArray(
-                this.properties.map((p) => {
-                    return p.toInterfaceString(prettify);
-                }),
-                prettify
-            )
-        );
-        s.push(
-            this.formatStringArray(
-                this.methods.map((m) => {
-                    return m.toInterfaceString(prettify);
-                }),
-                prettify
-            )
-        );
+
+        if ((this.properties !== undefined) && (this.properties.length > 0)) {
+            s.push(
+                this.formatStringArray(
+                    this.properties.map((p) => {
+                        return p.toInterfaceString(prettify);
+                    }),
+                    prettify
+                )
+            );
+        }
+        if ((this.methods !== undefined) && (this.methods.length > 0)) {
+            s.push(
+                this.formatStringArray(
+                    this.methods.map((m) => {
+                        return m.toInterfaceString(prettify);
+                    }),
+                    prettify
+                )
+            );
+        }
+
         s.push('}');
 
         return this.formatStringArray(s, prettify);
@@ -562,7 +568,9 @@ class CodeGen extends Base {
             [
                 this.getImportString(i, this.prettify),
                 this.formatStringArray(s, this.prettify),
-            ],
+            ].filter((s_) => {
+                return !_isNullOrEmpty(s_);
+            }),
             this.prettify
         );
 

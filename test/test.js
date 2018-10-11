@@ -537,23 +537,41 @@ describe('code-gen-ts', function() {
                 options,
                 interfaces: [{
                     name: 'Foo',
-                    methods: [
+                    methods: [{
+                        name: 'foo',
+                        type: 'string',
+                        args: [{
+                            name: 'bar',
+                            type: 'boolean',
+                            optional: true
+                        }]
+                    }]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export interface Foo{foo(bar?:boolean):string;}');
+        });
+        it('should not render extra new line', function() {
+            var z = cg({
+                options: {
+                    prettify: true
+                },
+                "interfaces": [{
+                    "name": "Event",
+                    "properties": [{
+                            "name": "type",
+                            "type": "EventType"
+                        },
                         {
-                            name: 'foo',
-                            type: 'string',
-                            args: [
-                                {
-                                    name: 'bar',
-                                    type: 'boolean',
-                                    optional: true
-                                }
-                            ]
+                            "name": "data",
+                            "optional": true
                         }
                     ]
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export interface Foo{foo(bar?:boolean):string;}');
+            var o = g.output.split(/[\n\r]/);
+            expect(o.length).to.equal(4);
         });
     });
 
