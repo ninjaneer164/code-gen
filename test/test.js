@@ -690,5 +690,23 @@ describe('code-gen-ts', function() {
             var g = z.generate();
             expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}constructor(){}}');
         });
+        it('should return class "Foo", static property "id"', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            "name": "_id",
+                            "type": "number",
+                            "static": true,
+                            "value": "new Date().getTime()"
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class Foo{private static __id:number=new Date().getTime();public static get _id():number{return this.__id;}public static set _id(value:number){this.__id=value;}constructor(){}}');
+        });
     });
 });

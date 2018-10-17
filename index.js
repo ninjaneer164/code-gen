@@ -466,14 +466,16 @@ class Property extends Base {
 
         super.toString(prettify);
 
+        var st = this.static ? ' static ' : ' ';
+
         var s = [];
 
         if (this.declare === true) {
-            s.push(`${this.tab}private _${this.name}:${this.space}${this.type}${this.space}=${this.space}${this.value};`);
+            s.push(`${this.tab}private${st}_${this.name}:${this.space}${this.type}${this.space}=${this.space}${this.value};`);
         }
 
         if (this.read === true) {
-            var r = `${this.tab}${this.modifier} get ${this.name}():${this.space}${this.type}${this.space}{${this.space}`;
+            var r = `${this.tab}${this.modifier}${st}get ${this.name}():${this.space}${this.type}${this.space}{${this.space}`;
             r += _isNullOrUndefined(this.getterBody)
                 ? `return this._${this.name};`
                 : `${this.getterBody}`;
@@ -481,7 +483,7 @@ class Property extends Base {
             s.push(r);
         }
         if (this.write === true) {
-            var w = `${this.tab}${this.modifier} set ${this.name}(value:${this.space}${this.type})${this.space}{`;
+            var w = `${this.tab}${this.modifier}${st}set ${this.name}(value:${this.space}${this.type})${this.space}{`;
             if (_isNullOrUndefined(this.setterBody)) {
                 w += `${this.space}this._${this.name}${this.space}=${this.space}value;`;
                 if (this.track === true) {
