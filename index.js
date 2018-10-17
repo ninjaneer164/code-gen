@@ -254,7 +254,7 @@ class Decorator extends Base {
         s.push(`@${this.type}({`);
 
         this.options.forEach((o, i) => {
-            var o_ = `${this.tab}${o.name}:${this.space}${this.space}${o.value}`;
+            var o_ = `${this.tab}${o.name}:${this.space}${o.value}`;
             if (i < (this.options.length - 1)) {
                 o_ += `,${this.space}`;
                 if (prettify === true) {
