@@ -471,7 +471,13 @@ class Property extends Base {
         var s = [];
 
         if (this.declare === true) {
-            s.push(`${this.tab}private${st}_${this.name}:${this.space}${this.type}${this.space}=${this.space}${this.value};`);
+            var m = (!this.read && !this.write)
+                ? this.modifier
+                : 'private';
+            var _ = (!this.read && !this.write)
+                ? ''
+                : '_';
+            s.push(`${this.tab}${m}${st}${_}${this.name}:${this.space}${this.type}${this.space}=${this.space}${this.value};`);
         }
 
         if (this.read === true) {

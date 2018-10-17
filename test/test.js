@@ -708,5 +708,25 @@ describe('code-gen-ts', function() {
             var g = z.generate();
             expect(g.output).to.equal('export class Foo{private static __id:number=new Date().getTime();public static get _id():number{return this.__id;}public static set _id(value:number){this.__id=value;}constructor(){}}');
         });
+        it('should return class "Foo", protected property "_className"', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            "name": "_className",
+                            "type": "string",
+                            "modifier": "protected",
+                            "read": false,
+                            "write": false,
+                            "value": "'BaseClass'"
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';constructor(){}}');
+        });
     });
 });
