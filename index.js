@@ -418,10 +418,12 @@ class Property extends Base {
         }
 
         this.declare = true;
+        this.getterBody = null;
         this.modifier = Modifier.PUBLIC;
         this.name = '';
         this.optional = false;
         this.read = true;
+        this.setterBody = null;
         this.static = false;
         this.track = false;
         this.trackDate = true;
@@ -471,24 +473,34 @@ class Property extends Base {
         }
 
         if (this.read === true) {
-            s.push(`${this.tab}${this.modifier} get ${this.name}():${this.space}${this.type}${this.space}{${this.space}return this._${this.name};${this.space}}`);
+            var r = `${this.tab}${this.modifier} get ${this.name}():${this.space}${this.type}${this.space}{${this.space}`;
+            r += _isNullOrUndefined(this.getterBody)
+                ? `return this._${this.name};`
+                : `${this.getterBody}`;
+            r += `${this.space}}`;
+            s.push(r);
         }
         if (this.write === true) {
-            var w = `${this.tab}${this.modifier} set ${this.name}(value:${this.space}${this.type})${this.space}{${this.space}this._${this.name}${this.space}=${this.space}value;`;
-            if (this.track === true) {
-                var d = (this.trackState === true)
-                    ? (this.options.isDirty !== undefined)
-                        ? this.options.isDirty
-                        : '_isDirty'
-                    : '';
-                var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;` : '';
-                var l = (this.trackDate === true)
-                    ? (this.options.lastUpdated !== undefined)
-                        ? this.options.lastUpdated
-                        : '_lastUpdated'
-                    : '';
-                var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();` : '';
-                w += `${dd}${ll}`;
+            var w = `${this.tab}${this.modifier} set ${this.name}(value:${this.space}${this.type})${this.space}{`;
+            if (_isNullOrUndefined(this.setterBody)) {
+                w += `${this.space}this._${this.name}${this.space}=${this.space}value;`;
+                if (this.track === true) {
+                    var d = (this.trackState === true)
+                        ? (this.options.isDirty !== undefined)
+                            ? this.options.isDirty
+                            : '_isDirty'
+                        : '';
+                    var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;` : '';
+                    var l = (this.trackDate === true)
+                        ? (this.options.lastUpdated !== undefined)
+                            ? this.options.lastUpdated
+                            : '_lastUpdated'
+                        : '';
+                    var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();` : '';
+                    w += `${dd}${ll}`;
+                }
+            } else {
+                w += `${this.setterBody}${this.space}`;
             }
             w += `${this.space}}`;
             s.push(w);

@@ -559,13 +559,13 @@ describe('code-gen-ts', function() {
                 "interfaces": [{
                     "name": "Event",
                     "properties": [{
-                            "name": "type",
-                            "type": "EventType"
-                        },
-                        {
-                            "name": "data",
-                            "optional": true
-                        }
+                        "name": "type",
+                        "type": "EventType"
+                    },
+                    {
+                        "name": "data",
+                        "optional": true
+                    }
                     ]
                 }]
             });
@@ -670,6 +670,25 @@ describe('code-gen-ts', function() {
             });
             var g = z.generate();
             expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);this._className=\'Foo\';}}');
+        });
+        it('should return class "Foo", property "id" with getter and setter bodies', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'id',
+                            type: 'number',
+                            value: 0,
+                            getterBody: 'return this._id;',
+                            setterBody: 'throw new Error(\'"id" cannot be set\');'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}constructor(){}}');
         });
     });
 });
