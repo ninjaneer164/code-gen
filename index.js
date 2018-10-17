@@ -107,6 +107,7 @@ class Class extends BaseClass {
 
         this.args = [];
         this.constructorCode = '';
+        this.decorator = null;
         this.implements = [];
         this.isBaseClass = false;
         this.properties = [];
@@ -122,6 +123,9 @@ class Class extends BaseClass {
         }
         if (data.constructorCode !== undefined) {
             this.constructorCode = data.constructorCode;
+        }
+        if (data.decorator !== undefined) {
+            this.decorator = new Decorator(data.decorator);
         }
         if (data.implements !== undefined) {
             this.implements = data.implements;
@@ -150,6 +154,10 @@ class Class extends BaseClass {
         var i = (this.implements.length === 0)
             ? ''
             : ` implements ${this.implements.join(`,${this.space}`)}`;
+
+        if (this.decorator !== null) {
+            s.push(this.decorator.toString(prettify));
+        }
 
         s.push(`export class ${this.name}${e}${i}${this.space}{`);
 
@@ -214,6 +222,53 @@ class Class extends BaseClass {
         }
 
         s.push('}');
+
+        return this.formatStringArray(s, prettify);
+    }
+}
+
+class Decorator extends Base {
+    constructor(data, options) {
+        super(options);
+
+        this.type = '';
+        this.options = [];
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
+        if (data.options !== undefined) {
+            this.options = data.options;
+        }
+    }
+
+    toString(prettify) {
+        if (_isNullOrEmpty(this.type)) {
+            return '';
+        }
+
+        super.toString(prettify);
+
+        var s = [];
+
+        s.push(`@${this.type}({`);
+
+        this.options.forEach((o, i) => {
+            var o_ = `${this.tab}${o.name}:${this.space}${this.space}${o.value}`;
+            if (i < (this.options.length - 1)) {
+                o_ += `,${this.space}`;
+                if (prettify === true) {
+                    o_ += '\n';
+                }
+            }
+            s.push(o_);
+        });
+
+        if (prettify === true) {
+            s.push('})');
+        } else {
+            s.push('}) ');
+        }
 
         return this.formatStringArray(s, prettify);
     }

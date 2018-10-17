@@ -76,9 +76,7 @@ describe('code-gen-ts', function() {
         it('CodeGen', function() {
             var o = {
                 options: {
-                    inferType: false,
-                    isDirty: '_isDirty',
-                    lastUpdated: '_lastUpdated'
+                    inferType: false
                 },
                 enums: [
                     {},
@@ -200,14 +198,6 @@ describe('code-gen-ts', function() {
                                 static: true,
                                 read: false,
                                 write: false
-                            }, {
-                                name: 'foo',
-                                track: false
-                            }, {
-                                name: 'foo',
-                                track: true,
-                                trackDate: false,
-                                trackState: false
                             }
                         ],
                         methods: [
@@ -225,15 +215,59 @@ describe('code-gen-ts', function() {
                                 name: 'bar',
                                 static: true
                             }
-                        ]
+                        ],
+                        decorator: {}
                     }
                 ]
             };
             cg(o).generate();
 
+            o.classes = [
+                {
+                    name: 'Foo',
+                    decorator: {
+                        type: 'Component',
+                        options: [
+                            {
+                                name: 'foo',
+                                value: 'foo-value'
+                            },
+                            {
+                                name: 'bar',
+                                value: 'bar-value'
+                            }
+                        ]
+                    }
+                }
+            ];
+            cg(o).generate();
+
             o.options = {
-                prettify: false
+                prettify: false,
+                isDirty: '_isDirty',
+                lastUpdated: '_lastUpdated'
             };
+            o.classes = [
+                {
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            track: false
+                        }, {
+                            name: 'foo',
+                            track: true,
+                            trackDate: false,
+                            trackState: false
+                        }, {
+                            name: 'foo',
+                            track: true,
+                            trackDate: true,
+                            trackState: true
+                        }
+                    ]
+                }
+            ];
             cg(o).generate();
 
             o.options = {
@@ -727,6 +761,48 @@ describe('code-gen-ts', function() {
             });
             var g = z.generate();
             expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';constructor(){}}');
+        });
+        it('should return class "Foo", decorator @Component, one option', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    decorator: {
+                        type: "Component",
+                        options: [
+                            {
+                                name: 'selector',
+                                value: "'some-component'"
+                            }
+                        ]
+                    }
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('@Component({selector:\'some-component\'}) export class Foo{constructor(){}}');
+        });
+        it('should return class "Foo", decorator @Component, two options', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    decorator: {
+                        type: "Component",
+                        options: [
+                            {
+                                name: 'selector',
+                                value: "'some-component'"
+                            },
+                            {
+                                name: 'templateUrl',
+                                value: "'some-component.html'"
+                            }
+                        ]
+                    }
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{constructor(){}}');
         });
     });
 });
