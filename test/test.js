@@ -268,6 +268,14 @@ describe('code-gen-ts', function() {
                             track: true,
                             trackDate: true,
                             trackState: true
+                        }, {
+                            name: 'foo',
+                            useGetterSetter: true
+                        }, {
+                            name: 'foo',
+                            useGetterSetter: true,
+                            read: false,
+                            write: false
                         }
                     ]
                 }
@@ -317,7 +325,7 @@ describe('code-gen-ts', function() {
                         {
                             name: '_isDirty',
                             type: 'boolean',
-                            value: 'false',
+                            value: 'false'
                         },
                         {
                             name: '_lastUpdated',
@@ -744,7 +752,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo{private static __id:number=new Date().getTime();public static get _id():number{return this.__id;}public static set _id(value:number){this.__id=value;}constructor(){}}');
+            expect(g.output).to.equal('export class Foo{public static _id:number=new Date().getTime();constructor(){}}');
         });
         it('should return class "Foo", protected property "_className"', function() {
             var z = cg({

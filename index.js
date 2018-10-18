@@ -516,11 +516,16 @@ class Property extends Base {
         this.trackDate = true;
         this.trackState = true;
         this.type = 'any';
-        this.value = 'null';
+        this.useGetterSetter = false;
+        this.value = null;
         this.write = true;
 
         if (data !== undefined) {
             _parseObject(data, this);
+        }
+
+        if ((this.track === true) || !_isNullOrEmpty(this.getterBody) || !_isNullOrEmpty(this.setterBody)) {
+            this.useGetterSetter = true;
         }
     }
 
@@ -558,48 +563,53 @@ class Property extends Base {
         var s = [];
 
         if (this.declare === true) {
-            var m = (!this.read && !this.write)
+            var m = ((!this.read && !this.write) || !this.useGetterSetter)
                 ? this.modifier
                 : 'private';
-            var _ = (!this.read && !this.write)
+            var _ = ((!this.read && !this.write) || !this.useGetterSetter)
                 ? ''
                 : '_';
-            s.push(`${this.tab}${m}${st}${_}${this.name}:${this.space}${this.type}${this.space}=${this.space}${this.value};`);
+            var v = _isNullOrUndefined(this.value)
+                ? ''
+                : `${this.space}=${this.space}${this.value}`;
+            s.push(`${this.tab}${m}${st}${_}${this.name}:${this.space}${this.type}${v};`);
         }
 
-        if (this.read === true) {
-            var r = `${this.tab}${this.modifier}${st}get ${this.name}():${this.space}${this.type}${this.space}{${this.newline}`;
-            r += `${this.tab}${this.tab}`;
-            r += _isNullOrUndefined(this.getterBody)
-                ? `return this._${this.name};`
-                : `${this.getterBody}`;
-            r += `${this.newline}${this.tab}}`;
-            s.push(r);
-        }
-        if (this.write === true) {
-            var w = `${this.tab}${this.modifier}${st}set ${this.name}(value:${this.space}${this.type})${this.space}{${this.newline}`;
-            if (_isNullOrUndefined(this.setterBody)) {
-                w += `${this.tab}${this.tab}this._${this.name}${this.space}=${this.space}value;${this.newline}`;
-                if (this.track === true) {
-                    var d = (this.trackState === true)
-                        ? (this.options.isDirty !== undefined)
-                            ? this.options.isDirty
-                            : '_isDirty'
-                        : '';
-                    var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;${this.newline}` : '';
-                    var l = (this.trackDate === true)
-                        ? (this.options.lastUpdated !== undefined)
-                            ? this.options.lastUpdated
-                            : '_lastUpdated'
-                        : '';
-                    var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();${this.newline}` : '';
-                    w += `${dd}${ll}`;
-                }
-            } else {
-                w += `${this.tab}${this.tab}${this.setterBody}${this.newline}`;
+        if (this.useGetterSetter === true) {
+            if (this.read === true) {
+                var r = `${this.tab}${this.modifier}${st}get ${this.name}():${this.space}${this.type}${this.space}{${this.newline}`;
+                r += `${this.tab}${this.tab}`;
+                r += _isNullOrUndefined(this.getterBody)
+                    ? `return this._${this.name};`
+                    : `${this.getterBody}`;
+                r += `${this.newline}${this.tab}}`;
+                s.push(r);
             }
-            w += `${this.tab}}`;
-            s.push(w);
+            if (this.write === true) {
+                var w = `${this.tab}${this.modifier}${st}set ${this.name}(value:${this.space}${this.type})${this.space}{${this.newline}`;
+                if (_isNullOrUndefined(this.setterBody)) {
+                    w += `${this.tab}${this.tab}this._${this.name}${this.space}=${this.space}value;${this.newline}`;
+                    if (this.track === true) {
+                        var d = (this.trackState === true)
+                            ? (this.options.isDirty !== undefined)
+                                ? this.options.isDirty
+                                : '_isDirty'
+                            : '';
+                        var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;${this.newline}` : '';
+                        var l = (this.trackDate === true)
+                            ? (this.options.lastUpdated !== undefined)
+                                ? this.options.lastUpdated
+                                : '_lastUpdated'
+                            : '';
+                        var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();${this.newline}` : '';
+                        w += `${dd}${ll}`;
+                    }
+                } else {
+                    w += `${this.tab}${this.tab}${this.setterBody}${this.newline}`;
+                }
+                w += `${this.tab}}`;
+                s.push(w);
+            }
         }
 
         return this.formatStringArray(s, prettify);
