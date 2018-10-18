@@ -190,7 +190,8 @@ describe('code-gen-ts', function() {
                             {},
                             {
                                 name: 'foo',
-                                track: true
+                                track: true,
+                                canExport: false
                             },
                             {
                                 name: 'bar',
@@ -245,11 +246,14 @@ describe('code-gen-ts', function() {
             o.options = {
                 prettify: false,
                 isDirty: '_isDirty',
-                lastUpdated: '_lastUpdated'
+                lastUpdated: '_lastUpdated',
+                className: '_className',
+                exports: '_exports'
             };
             o.classes = [
                 {
                     name: 'Foo',
+                    extends: 'Bar',
                     properties: [
                         {
                             name: 'foo',
@@ -631,7 +635,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo{constructor(){}}');
+            expect(g.output).to.equal('export class Foo{}');
         });
         it('should return class "Foo", extends "Bar"', function() {
             var z = cg({
@@ -642,7 +646,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super();this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super();}}');
         });
         it('should return class "Foo", implements "Bar"', function() {
             var z = cg({
@@ -653,7 +657,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo implements Bar{constructor(){}}');
+            expect(g.output).to.equal('export class Foo implements Bar{}');
         });
         it('should return class "Foo", implements "Bar" and "Bar2"', function() {
             var z = cg({
@@ -664,7 +668,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo implements Bar,Bar2{constructor(){}}');
+            expect(g.output).to.equal('export class Foo implements Bar,Bar2{}');
         });
         it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
             var z = cg({
@@ -676,7 +680,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo extends Bar implements Bar2{constructor(){super();this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar implements Bar2{constructor(){super();}}');
         });
         it('should return class "Foo", arg "foo"', function() {
             var z = cg({
@@ -703,7 +707,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);this._className=\'Foo\';}}');
+            expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);}}');
         });
         it('should return class "Foo", property "id" with getter and setter bodies', function() {
             var z = cg({
@@ -779,7 +783,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('@Component({selector:\'some-component\'}) export class Foo{constructor(){}}');
+            expect(g.output).to.equal('@Component({selector:\'some-component\'}) export class Foo{}');
         });
         it('should return class "Foo", decorator @Component, two options', function() {
             var z = cg({
@@ -802,7 +806,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{constructor(){}}');
+            expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{}');
         });
     });
 });

@@ -1,5 +1,6 @@
 'use strict';
 
+var NEWLINE = '\n';
 var SPACE = ' ';
 var TAB = '    ';
 
@@ -28,6 +29,7 @@ class Base {
             _parseObject(options, this);
         }
 
+        this.newline = NEWLINE;
         this.space = SPACE;
         this.tab = TAB;
     }
@@ -36,7 +38,7 @@ class Base {
         toString(prettify);
 
         if (prettify === true) {
-            return a.join('\n');
+            return a.join(this.newline);
         } else {
             return a.join(this.space);
         }
@@ -62,6 +64,7 @@ class Base {
             prettify = false;
         }
 
+        this.newline = (prettify === true) ? NEWLINE : '';
         this.space = (prettify === true) ? SPACE : '';
         this.tab = (prettify === true) ? TAB : '';
 
@@ -106,12 +109,23 @@ class Class extends BaseClass {
         super(data, options);
 
         this.args = [];
+        this.className = null;
         this.constructorCode = '';
         this.decorator = null;
+        this.exports = null;
         this.implements = [];
         this.isBaseClass = false;
         this.properties = [];
         this.superArgs = [];
+
+        if (options !== undefined) {
+            if (options.className !== undefined) {
+                this.className = options.className;
+            }
+            if (options.exports !== undefined) {
+                this.exports = options.exports;
+            }
+        }
 
         if (data.args !== undefined) {
             this.args = data.args.map((a) => {
@@ -182,7 +196,11 @@ class Class extends BaseClass {
         if (sm.length > 0) {
             s.push(_(sm, prettify));
         }
+        var ex = [];
         var np = this.properties.filter((p) => {
+            if (p.canExport === true) {
+                ex.push(p);
+            }
             return (p.static === false);
         });
         if (np.length > 0) {
@@ -195,24 +213,40 @@ class Class extends BaseClass {
             }),
             prettify
         );
-        var c = `${this.tab}constructor(${a})${this.space}{`;
-        if (!_isNullOrEmpty(this.extends)) {
-            var sa = _(
-                this.superArgs.map((a_) => {
-                    return a_.name;
-                }),
-                prettify
-            );
-            c += `${this.space}super(${sa});`;
-            c += `${this.space}this._className${this.space}=${this.space}'${this.name}';`;
-        } else {
-            c += ``;
+
+        if (!_isNullOrEmpty(this.extends) || (a.length > 0) || (ex.length > 0) || !_isNullOrEmpty(this.constructorCode)) {
+            var c = `${this.tab}constructor(${a})${this.space}{${this.newline}`;
+            if (!_isNullOrEmpty(this.extends)) {
+                var sa = _(
+                    this.superArgs.map((a_) => {
+                        return a_.name;
+                    }),
+                    prettify
+                );
+                c += `${this.tab}${this.tab}super(${sa});${this.newline}`;
+
+                if (!_isNullOrEmpty(this.className)) {
+                    c += `${this.tab}${this.tab}this.${this.className}${this.space}=${this.space}'${this.name}';${this.newline}`;
+                }
+            }
+            if ((ex.length > 0) && !_isNullOrEmpty(this.exports)) {
+                c += `${this.tab}${this.tab}if${this.space}(this.${this.exports}${this.space}!==${this.space}undefined)${this.space}{${this.newline}`;
+                c += `${this.tab}${this.tab}${this.tab}this.${this.exports}${this.space}=${this.space}[${this.space}...this.${this.exports},`;
+                ex.forEach((ex_, i) => {
+                    c += `${this.space}'${ex_.name}'`;
+                    if (i < (ex.length - 1)) {
+                        c += ',';
+                    }
+                });
+                c += `${this.space}];${this.newline}`;
+                c += `${this.tab}${this.tab}}${this.newline}`;
+            }
+            if (!_isNullOrEmpty(this.constructorCode)) {
+                c += `${this.tab}${this.tab}${this.constructorCode}${this.newline}`;
+            }
+            c += `${this.tab}}`;
+            s.push(c);
         }
-        if (!_isNullOrEmpty(this.constructorCode)) {
-            c += `${this.space}${this.constructorCode}`;
-        }
-        c += `${this.space}}`;
-        s.push(c);
 
         var nm = this.methods.filter((m) => {
             return m.static === false;
@@ -253,16 +287,13 @@ class Decorator extends Base {
 
         s.push(`@${this.type}({`);
 
-        this.options.forEach((o, i) => {
+        s.push(this.options.map((o, i) => {
             var o_ = `${this.tab}${o.name}:${this.space}${o.value}`;
             if (i < (this.options.length - 1)) {
                 o_ += `,${this.space}`;
-                if (prettify === true) {
-                    o_ += '\n';
-                }
             }
-            s.push(o_);
-        });
+            return o_;
+        }).join(this.newline));
 
         if (prettify === true) {
             s.push('})');
@@ -326,7 +357,7 @@ class Enum extends Base {
             }
         });
         if (prettify) {
-            s.push(e.join(',\n'));
+            s.push(e.join(`,${this.newline}`));
         } else {
             s.push(e.join());
         }
@@ -472,6 +503,7 @@ class Property extends Base {
             }
         }
 
+        this.canExport = true;
         this.declare = true;
         this.getterBody = null;
         this.modifier = Modifier.PUBLIC;
@@ -536,36 +568,37 @@ class Property extends Base {
         }
 
         if (this.read === true) {
-            var r = `${this.tab}${this.modifier}${st}get ${this.name}():${this.space}${this.type}${this.space}{${this.space}`;
+            var r = `${this.tab}${this.modifier}${st}get ${this.name}():${this.space}${this.type}${this.space}{${this.newline}`;
+            r += `${this.tab}${this.tab}`;
             r += _isNullOrUndefined(this.getterBody)
                 ? `return this._${this.name};`
                 : `${this.getterBody}`;
-            r += `${this.space}}`;
+            r += `${this.newline}${this.tab}}`;
             s.push(r);
         }
         if (this.write === true) {
-            var w = `${this.tab}${this.modifier}${st}set ${this.name}(value:${this.space}${this.type})${this.space}{`;
+            var w = `${this.tab}${this.modifier}${st}set ${this.name}(value:${this.space}${this.type})${this.space}{${this.newline}`;
             if (_isNullOrUndefined(this.setterBody)) {
-                w += `${this.space}this._${this.name}${this.space}=${this.space}value;`;
+                w += `${this.tab}${this.tab}this._${this.name}${this.space}=${this.space}value;${this.newline}`;
                 if (this.track === true) {
                     var d = (this.trackState === true)
                         ? (this.options.isDirty !== undefined)
                             ? this.options.isDirty
                             : '_isDirty'
                         : '';
-                    var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;` : '';
+                    var dd = (d.length > 0) ? `${this.space}this.${d}${this.space}=${this.space}true;${this.newline}` : '';
                     var l = (this.trackDate === true)
                         ? (this.options.lastUpdated !== undefined)
                             ? this.options.lastUpdated
                             : '_lastUpdated'
                         : '';
-                    var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();` : '';
+                    var ll = (l.length > 0) ? `${this.space}this.${l}${this.space}=${this.space}(new Date()).getTime();${this.newline}` : '';
                     w += `${dd}${ll}`;
                 }
             } else {
-                w += `${this.setterBody}${this.space}`;
+                w += `${this.tab}${this.tab}${this.setterBody}${this.newline}`;
             }
-            w += `${this.space}}`;
+            w += `${this.tab}}`;
             s.push(w);
         }
 
