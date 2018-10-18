@@ -207,12 +207,9 @@ class Class extends BaseClass {
             s.push(_(np, prettify));
         }
 
-        var a = _(
-            this.args.map((a_) => {
-                return a_.toArgString(prettify);
-            }),
-            prettify
-        );
+        var a = this.args.map((a_) => {
+            return a_.toArgString(prettify);
+        }).join(`,${this.space}`);
 
         if (!_isNullOrEmpty(this.extends) || (a.length > 0) || (ex.length > 0) || !_isNullOrEmpty(this.constructorCode)) {
             var c = `${this.tab}constructor(${a})${this.space}{${this.newline}`;

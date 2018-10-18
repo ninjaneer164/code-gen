@@ -816,5 +816,23 @@ describe('code-gen-ts', function() {
             var g = z.generate();
             expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{}');
         });
+        it('should return class "Foo", two constructor args', function() {
+            var z = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    args: [
+                        {
+                            name: 'foo'
+                        },
+                        {
+                            name: 'bar'
+                        }
+                    ]
+                }]
+            });
+            var g = z.generate();
+            expect(g.output).to.equal('export class Foo{constructor(foo:any,bar:any){}}');
+        });
     });
 });
