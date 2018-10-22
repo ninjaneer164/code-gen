@@ -110,20 +110,19 @@ class Class extends BaseClass {
 
         this.args = [];
         this.className = null;
+        this.clones = [];
         this.constructorCode = '';
         this.decorator = null;
-        this.exports = null;
+        this.exports = [];
         this.implements = [];
         this.isBaseClass = false;
+        this.isBaseModel = false;
         this.properties = [];
         this.superArgs = [];
 
         if (options !== undefined) {
             if (options.className !== undefined) {
                 this.className = options.className;
-            }
-            if (options.exports !== undefined) {
-                this.exports = options.exports;
             }
         }
 
@@ -134,6 +133,9 @@ class Class extends BaseClass {
         }
         if (data.isBaseClass !== undefined) {
             this.isBaseClass = data.isBaseClass;
+        }
+        if (data.isBaseModel !== undefined) {
+            this.isBaseModel = data.isBaseModel;
         }
         if (data.constructorCode !== undefined) {
             this.constructorCode = data.constructorCode;
@@ -196,10 +198,12 @@ class Class extends BaseClass {
         if (sm.length > 0) {
             s.push(_(sm, prettify));
         }
-        var ex = [];
         var np = this.properties.filter((p) => {
+            if (p.canClone === true) {
+                this.clones.push(p);
+            }
             if (p.canExport === true) {
-                ex.push(p);
+                this.exports.push(p);
             }
             return (p.static === false);
         });
@@ -207,11 +211,23 @@ class Class extends BaseClass {
             s.push(_(np, prettify));
         }
 
+        if (this.isBaseModel === true) {
+            var cl = this.clones.map((cl_) => {
+                return `'${cl_.name}'`;
+            }).join(`,${this.space}`);
+            s.push(`${this.tab}protected _clones:${this.space}string[]${this.space}=${this.space}[${this.space}${cl}${this.space}];`);
+
+            var ex = this.exports.map((ex_) => {
+                return `'${ex_.name}'`;
+            }).join(`,${this.space}`);
+            s.push(`${this.tab}protected _exports:${this.space}string[]${this.space}=${this.space}[${this.space}${ex}${this.space}];`);
+        }
+
         var a = this.args.map((a_) => {
             return a_.toArgString(prettify);
         }).join(`,${this.space}`);
 
-        if (!_isNullOrEmpty(this.extends) || (a.length > 0) || (ex.length > 0) || !_isNullOrEmpty(this.constructorCode)) {
+        if (!_isNullOrEmpty(this.extends) || (a.length > 0) || !_isNullOrEmpty(this.constructorCode)) {
             var c = `${this.tab}constructor(${a})${this.space}{${this.newline}`;
             if (!_isNullOrEmpty(this.extends)) {
                 var sa = _(
@@ -226,23 +242,67 @@ class Class extends BaseClass {
                     c += `${this.tab}${this.tab}this.${this.className}${this.space}=${this.space}'${this.name}';${this.newline}`;
                 }
             }
-            if ((ex.length > 0) && !_isNullOrEmpty(this.exports)) {
-                c += `${this.tab}${this.tab}if${this.space}(this.${this.exports}${this.space}!==${this.space}undefined)${this.space}{${this.newline}`;
-                c += `${this.tab}${this.tab}${this.tab}this.${this.exports}${this.space}=${this.space}[${this.space}...this.${this.exports},`;
-                ex.forEach((ex_, i) => {
-                    c += `${this.space}'${ex_.name}'`;
-                    if (i < (ex.length - 1)) {
-                        c += ',';
-                    }
-                });
+
+            if (this.clones.length > 0) {
+                c += `${this.tab}${this.tab}this._clones${this.space}=${this.space}[${this.space}...this._clones,${this.space}`;
+                c += this.clones.map((cl) => {
+                    return `'${cl.name}'`;
+                }).join(`,${this.space}`);
                 c += `${this.space}];${this.newline}`;
-                c += `${this.tab}${this.tab}}${this.newline}`;
             }
+
+            if (this.exports.length > 0) {
+                c += `${this.tab}${this.tab}this._exports${this.space}=${this.space}[${this.space}...this._exports,${this.space}`;
+                c += this.exports.map((ex) => {
+                    return `'${ex.name}'`;
+                }).join(`,${this.space}`);
+                c += `${this.space}];${this.newline}`;
+            }
+
             if (!_isNullOrEmpty(this.constructorCode)) {
                 c += `${this.tab}${this.tab}${this.constructorCode}${this.newline}`;
             }
             c += `${this.tab}}`;
             s.push(c);
+        }
+
+        if (this.isBaseModel) {
+            s.push(new Method({
+                name: 'registerProperty',
+                args: [
+                    {
+                        name: 'name',
+                        type: 'string'
+                    },
+                    {
+                        name: 'canClone',
+                        type: 'boolean',
+                        value: 'true'
+                    },
+                    {
+                        name: 'canExport',
+                        type: 'boolean',
+                        value: 'true'
+                    },
+                    {
+                        name: 'canUndo',
+                        type: 'boolean',
+                        value: 'true'
+                    }
+                ],
+                body: 'if (canClone) { this._clones.push(name); } if (canExport) { this._exports.push(name); } if (canUndo) { this.__[name] = this[name]; }'
+            }).toString(prettify));
+
+            s.push(new Method({
+                name: 'registerProperties',
+                args: [
+                    {
+                        name: 'properties',
+                        type: 'any[]'
+                    }
+                ],
+                body: 'properties.forEach((p) => { if (!this.isNullOrUndefined(p) && !this.isNullOrEmpty(p.name)) { const n = p.name; const c = this.isNullOrUndefined(p.canClone) ? true : p.canClone; const e = this.isNullOrUndefined(p.canExport) ? true : p.canExport; const u = this.isNullOrUndefined(p.canUndo) ? true : p.canUndo; this.registerProperty(n, c, e, u); } });'
+            }).toString(prettify));
         }
 
         var nm = this.methods.filter((m) => {
@@ -479,7 +539,7 @@ class Method extends Base {
             })
             .join(`,${this.space}`);
 
-        s.push(`${this.tab}${this.modifier}${t} ${this.name}${this.space}(${a}):${this.space}${this.type}${this.space}{`);
+        s.push(`${this.tab}${this.modifier}${t} ${this.name}(${a}):${this.space}${this.type}${this.space}{`);
         s.push(`${this.tab}${this.tab}${this.body}`);
         s.push(`${this.tab}}`);
 
@@ -500,6 +560,7 @@ class Property extends Base {
             }
         }
 
+        this.canClone = true;
         this.canExport = true;
         this.declare = true;
         this.getterBody = null;
@@ -533,9 +594,14 @@ class Property extends Base {
 
         super.toString(prettify);
 
-        var o = this.optional ? '?' : '';
+        var o = this.optional
+            ? '?'
+            : '';
+        var v = _isNullOrEmpty(this.value)
+            ? ''
+            : `${this.space}=${this.space}${this.value}`;
 
-        return `${this.name}${o}:${this.space}${this.type}`;
+        return `${this.name}${o}:${this.space}${this.type}${v}`;
     }
     toInterfaceString(prettify) {
         if (_isNullOrEmpty(this.name)) {

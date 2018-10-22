@@ -247,13 +247,13 @@ describe('code-gen-ts', function() {
                 prettify: false,
                 isDirty: '_isDirty',
                 lastUpdated: '_lastUpdated',
-                className: '_className',
-                exports: '_exports'
+                className: '_className'
             };
             o.classes = [
                 {
                     name: 'Foo',
                     extends: 'Bar',
+                    isBaseModel: true,
                     properties: [
                         {
                             name: 'foo',
@@ -270,12 +270,14 @@ describe('code-gen-ts', function() {
                             trackState: true
                         }, {
                             name: 'foo',
-                            useGetterSetter: true
+                            useGetterSetter: true,
+                            canClone: true
                         }, {
                             name: 'foo',
                             useGetterSetter: true,
                             read: false,
-                            write: false
+                            write: false,
+                            canClone: false
                         }
                     ]
                 }
@@ -734,7 +736,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}constructor(){}}');
+            expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}}');
         });
         it('should return class "Foo", static property "id"', function() {
             var z = cg({
@@ -752,7 +754,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo{public static _id:number=new Date().getTime();constructor(){}}');
+            expect(g.output).to.equal('export class Foo{public static _id:number=new Date().getTime();}');
         });
         it('should return class "Foo", protected property "_className"', function() {
             var z = cg({
@@ -772,7 +774,7 @@ describe('code-gen-ts', function() {
                 }]
             });
             var g = z.generate();
-            expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';constructor(){}}');
+            expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';}');
         });
         it('should return class "Foo", decorator @Component, one option', function() {
             var z = cg({
