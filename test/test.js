@@ -280,6 +280,13 @@ describe('code-gen-ts', function() {
                             canClone: false
                         }
                     ]
+                },
+                {
+                    name: 'Foo',
+                    canClone: true,
+                    canExport: true,
+                    canUndo: true,
+                    isBaseModel: true
                 }
             ];
             cg(o).generate();

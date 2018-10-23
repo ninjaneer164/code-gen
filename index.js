@@ -109,6 +109,9 @@ class Class extends BaseClass {
         super(data, options);
 
         this.args = [];
+        this.canClone = false;
+        this.canExport = false;
+        this.canUndo = false;
         this.className = null;
         this.clones = [];
         this.constructorCode = '';
@@ -131,20 +134,8 @@ class Class extends BaseClass {
                 return new Property(a, options);
             });
         }
-        if (data.isBaseClass !== undefined) {
-            this.isBaseClass = data.isBaseClass;
-        }
-        if (data.isBaseModel !== undefined) {
-            this.isBaseModel = data.isBaseModel;
-        }
-        if (data.constructorCode !== undefined) {
-            this.constructorCode = data.constructorCode;
-        }
         if (data.decorator !== undefined) {
             this.decorator = new Decorator(data.decorator);
-        }
-        if (data.implements !== undefined) {
-            this.implements = data.implements;
         }
         if (data.properties !== undefined) {
             this.properties = data.properties.map((p) => {
@@ -156,6 +147,11 @@ class Class extends BaseClass {
                 return new Property(a, options);
             });
         }
+        ['canClone', 'canExport', 'canUndo', 'constructorCode', 'implements', 'isBaseClass', 'isBaseModel'].forEach((k) => {
+            if (data[k] !== undefined) {
+                this[k] = data[k];
+            }
+        });
     }
 
     toString(prettify) {
@@ -303,6 +299,53 @@ class Class extends BaseClass {
                 ],
                 body: 'properties.forEach((p) => { if (!this.isNullOrUndefined(p) && !this.isNullOrEmpty(p.name)) { const n = p.name; const c = this.isNullOrUndefined(p.canClone) ? true : p.canClone; const e = this.isNullOrUndefined(p.canExport) ? true : p.canExport; const u = this.isNullOrUndefined(p.canUndo) ? true : p.canUndo; this.registerProperty(n, c, e, u); } });'
             }).toString(prettify));
+
+            if (this.canClone) {
+                s.push(new Method({
+                    name: 'clone',
+                    type: 'any',
+                    args: [
+                        {
+                            name: 'obj',
+                            type: 'any'
+                        }
+                    ],
+                    body: 'const o = obj || {}; if (this._clones !== undefined) { this._clones.forEach((k) => { o[k] = this[k]; }); } return o;'
+                }).toString(prettify));
+            }
+
+            if (this.canExport) {
+                s.push(new Method({
+                    name: 'toObject',
+                    type: 'any',
+                    body: 'const o = {}; this._exports.forEach((e) => { if (this[e] !== undefined) { if (this[e][\'toObject\'] !== undefined) { o[e] = this[e].toObject(); } else { o[e] = this[e]; } } }); return o;'
+                }).toString(prettify));
+            }
+
+            var po = this.canUndo
+                ? ' Object.keys(data).forEach((k) => { if (!this.isNullOrUndefined(this[k])) { this.__[k] = this[k]; } });'
+                : '';
+            s.push(new Method({
+                name: 'parseObject',
+                args: [
+                    {
+                        name: 'data'
+                    }
+                ],
+                body: `if (!this.isNullOrUndefined(data)) { Utils.parseObject(data, this);${po} }`
+            }).toString(prettify));
+
+            if (this.canUndo) {
+                s.push(new Method({
+                    name: 'commit',
+                    body: 'if (!this.isNullOrUndefined(this.__)) { Object.keys(this.__).forEach((k) => { if (this[k][\'commit\'] !== undefined) { this[k].commit(); } else { this.__[k] = this[k]; } }); }'
+                }).toString(prettify));
+
+                s.push(new Method({
+                    name: 'revert',
+                    body: 'if (!this.isNullOrUndefined(this.__)) { Object.keys(this.__).forEach((k) => { if (this[k][\'revert\'] !== undefined) { this[k].revert(); } else { this[k] = this.__[k]; } }); }'
+                }).toString(prettify));
+            }
         }
 
         var nm = this.methods.filter((m) => {
