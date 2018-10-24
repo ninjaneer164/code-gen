@@ -24,6 +24,7 @@ var Modifier = {
 };
 
 class Base {
+
     constructor(options) {
         if (options !== undefined) {
             _parseObject(options, this);
@@ -73,6 +74,7 @@ class Base {
 }
 
 class BaseClass extends Base {
+
     constructor(data, options) {
         super(options);
 
@@ -102,9 +104,15 @@ class BaseClass extends Base {
             this.name = data.name;
         }
     }
+
+    addExtends(value) {
+        this.extends = value;
+        return this;
+    }
 }
 
 class Class extends BaseClass {
+
     constructor(data, options) {
         super(data, options);
 
@@ -154,6 +162,38 @@ class Class extends BaseClass {
         });
     }
 
+    addArg(name) {
+        var p = new Property({
+            name
+        });
+        this.args.push(p);
+        return p;
+    }
+    addDecorator(type) {
+        var d = new Decorator({
+            type
+        });
+        this.decorator = d;
+        return d;
+    }
+    addImplements(value) {
+        this.implements.push(value);
+        return this;
+    }
+    addProperty(name) {
+        var p = new Property({
+            name
+        });
+        this.properties.push(p);
+        return p;
+    }
+    addSuperArg(name) {
+        var p = new Property({
+            name
+        });
+        this.superArgs.push(p);
+        return p;
+    }
     toString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -366,6 +406,7 @@ class Class extends BaseClass {
 }
 
 class Decorator extends Base {
+
     constructor(data, options) {
         super(options);
 
@@ -380,6 +421,13 @@ class Decorator extends Base {
         }
     }
 
+    addOption(name, value) {
+        this.options.push({
+            name,
+            value
+        });
+        return this;
+    }
     toString(prettify) {
         if (_isNullOrEmpty(this.type)) {
             return '';
@@ -410,6 +458,7 @@ class Decorator extends Base {
 }
 
 class Enum extends Base {
+
     constructor(data, options) {
         super(options);
 
@@ -431,15 +480,18 @@ class Enum extends Base {
                 : data.names.map((n) => {
                     return '';
                 });
-            this.enums = data.names.map((n, i) => {
-                return new EnumItem({
-                    name: n,
-                    value: this.values[i],
-                });
-            });
+            this.updateEnums();
         }
     }
 
+    addItem(name, value) {
+        this.names.push(name);
+        this.values.push((value !== undefined)
+            ? value
+            : '');
+        this.updateEnums();
+        return this;
+    }
     toString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -470,9 +522,18 @@ class Enum extends Base {
 
         return this.formatStringArray(s, prettify);
     }
+    updateEnums() {
+        this.enums = this.names.map((n, i) => {
+            return new EnumItem({
+                name: n,
+                value: this.values[i],
+            });
+        });
+    }
 }
 
 class EnumItem extends Base {
+
     constructor(data) {
         super();
 
@@ -492,10 +553,25 @@ class EnumItem extends Base {
 }
 
 class Interface extends BaseClass {
+
     constructor(data, options) {
         super(data, options);
     }
 
+    addMethod(name) {
+        var m = new Method({
+            name
+        });
+        this.methods.push(m);
+        return m;
+    }
+    addProperty(name) {
+        var p = new Property({
+            name
+        });
+        this.properties.push(p);
+        return p;
+    }
     toString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -536,6 +612,7 @@ class Interface extends BaseClass {
 }
 
 class Method extends Base {
+
     constructor(data, options) {
         super(options);
 
@@ -555,6 +632,17 @@ class Method extends Base {
         }
     }
 
+    addArg(name) {
+        var p = new Property({
+            name
+        });
+        this.args.push(p);
+        return p;
+    }
+    setType(value) {
+        this.type = value;
+        return this;
+    }
     toInterfaceString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -595,6 +683,7 @@ class Method extends Base {
 }
 
 class Property extends Base {
+
     constructor(data, options) {
         super(options);
 
@@ -634,6 +723,44 @@ class Property extends Base {
         }
     }
 
+    setGetter(value) {
+        this.getterBody = value;
+        this.useGetterSetter = true;
+        return this;
+    }
+    setModifier(value) {
+        this.modifier = value;
+        return this;
+    }
+    setOptional() {
+        this.optional = true;
+        return this;
+    }
+    setRead(value) {
+        this.read = value;
+        return this;
+    }
+    setSetter(value) {
+        this.setterBody = value;
+        this.useGetterSetter = true;
+        return this;
+    }
+    setStatic() {
+        this.static = true;
+        return this;
+    }
+    setType(value) {
+        this.type = value;
+        return this;
+    }
+    setValue(value) {
+        this.value = value;
+        return this;
+    }
+    setWrite(value) {
+        this.write = value;
+        return this;
+    }
     toArgString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -727,6 +854,7 @@ class Property extends Base {
 }
 
 class CodeGen extends Base {
+
     constructor(def) {
         super();
 
@@ -774,6 +902,27 @@ class CodeGen extends Base {
         }
     }
 
+    addClass(name) {
+        var c = new Class({
+            name
+        });
+        this.classes.push(c);
+        return c;
+    }
+    addEnum(name) {
+        var e = new Enum({
+            name
+        });
+        this.enums.push(e);
+        return e;
+    }
+    addInterface(name) {
+        var i = new Interface({
+            name
+        });
+        this.interfaces.push(i);
+        return i;
+    }
     generate() {
         var z = {
             classes: [],
