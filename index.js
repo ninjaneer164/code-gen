@@ -195,11 +195,15 @@ class Class extends BaseClass {
             s.push(_(sm, prettify));
         }
         var np = this.properties.filter((p) => {
-            if (p.canClone === true) {
-                this.clones.push(p);
+            if (this.canClone === true) {
+                if (p.canClone === true) {
+                    this.clones.push(p);
+                }
             }
-            if (p.canExport === true) {
-                this.exports.push(p);
+            if (this.canExport === true) {
+                if (p.canExport === true) {
+                    this.exports.push(p);
+                }
             }
             return (p.static === false);
         });
@@ -742,8 +746,17 @@ class CodeGen extends Base {
             TAB = new Array(this.tabSize + 1).join(SPACE);
 
             if (def.classes !== undefined) {
+                var hasBaseModel = false;
                 this.classes = def.classes.map((c) => {
-                    return new Class(c, def.options);
+                    if (c.isBaseModel === true) {
+                        hasBaseModel = true;
+                    }
+                    var cl = new Class(c, def.options);
+                    if ((cl.isBaseModel === false) && (hasBaseModel === true)) {
+                        cl.canClone = true;
+                        cl.canExport = true;
+                    }
+                    return cl;
                 });
             }
 
