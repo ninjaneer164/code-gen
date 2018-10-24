@@ -323,7 +323,7 @@ class Class extends BaseClass {
             }
 
             var po = this.canUndo
-                ? ' Object.keys(data).forEach((k) => { if (!this.isNullOrUndefined(this[k])) { this.__[k] = this[k]; } });'
+                ? ' Object.keys(data).forEach((k) => { if ((this[k] !== undefined)) { this.__[k] = this[k]; } });'
                 : '';
             s.push(new Method({
                 name: 'parseObject',
