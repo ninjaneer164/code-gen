@@ -4,6 +4,16 @@ var expect = require('chai').expect;
 var cg = require('../index').CodeGen;
 var Modifier = require('../index').Modifier;
 
+function verify(cg, result) {
+    var g = cg.generate();
+    expect(g.output).to.equal(result);
+}
+function verifyLineCount(cg, count) {
+    var g = cg.generate();
+    var o = g.output.split(/[\n\r]/);
+    expect(o.length).to.equal(count);
+}
+
 describe('code-gen-ts', function() {
 
     describe('#Modifier', function() {
@@ -72,236 +82,1122 @@ describe('code-gen-ts', function() {
         });
     });
 
-    describe('#coverage', function() {
-        it('CodeGen', function() {
-            var o = {
-                options: {
-                    inferType: false
-                },
-                enums: [
-                    {},
-                    {
-                        name: 'Foo'
-                    },
-                    {
-                        name: 'Bar',
-                        names: ['foo', 'bar'],
-                        values: []
-                    },
-                    {
-                        name: 'Bar',
-                        names: ['foo', 'bar'],
-                        values: [1]
-                    },
-                    {
-                        names: ['foo', 'bar']
-                    },
-                    {
-                        names: ['foo', 'bar'],
-                        values: []
-                    },
-                    {
-                        names: ['foo', 'bar'],
-                        values: ['1']
-                    }
-                ],
-                interfaces: [
-                    {},
-                    {
-                        name: 'Foo'
-                    },
-                    {
-                        name: 'Foo',
-                        extends: 'Bar',
-                        import: [
-                            {
-                                name: 'Foo',
-                                path: '@angular/core'
-                            },
-                            {
-                                name: 'Bar',
-                                path: '@angular/core'
-                            }
-                        ],
-                        properties: [
-                            {},
-                            {
-                                name: 'foo'
-                            },
-                            {
-                                name: 'bar',
-                                optional: true
-                            }
-                        ],
-                        methods: [
-                            {},
-                            {
-                                name: 'foo',
-                                args: [
-                                    {
-                                        name: 'foo',
-                                        type: 'any'
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ],
-                classes: [
-                    {},
-                    {
-                        properties: [
-                            undefined
-                        ]
-                    },
-                    {
-                        name: 'Foo'
-                    },
-                    {
-                        name: 'Bar',
-                        isBaseClass: true
-                    },
-                    {
-                        name: 'Bar',
-                        extends: 'Foo',
-                        implements: ['Foo'],
-                        import: [{
-                            name: 'Foo',
-                            path: '@angular/core'
-                        }],
-                        isBaseClass: false,
-                        args: [
-                            {},
-                            {
-                                name: 'foo'
-                            },
-                            {
-                                name: 'bar',
-                                optional: true
-                            }
-                        ],
-                        superArgs: [
-                            {
-                                name: 'foo'
-                            }
-                        ],
-                        constructorCode: 'hello world',
-                        properties: [
-                            {},
-                            {
-                                name: 'foo',
-                                track: true,
-                                canExport: false
-                            },
-                            {
-                                name: 'bar',
-                                declare: false,
-                                static: true,
-                                read: false,
-                                write: false
-                            }
-                        ],
-                        methods: [
-                            {},
-                            {
-                                name: 'foo',
-                                args: [
-                                    {
-                                        name: 'foo',
-                                        type: 'any'
-                                    }
-                                ]
-                            },
-                            {
-                                name: 'bar',
-                                static: true
-                            }
-                        ],
-                        decorator: {}
-                    }
-                ]
-            };
-            cg(o).generate();
+    describe('#base', function() {
 
-            o.classes = [
+        var cg0, cg1;
+
+        cg0 = cg({
+            options: {
+                prettify: undefined
+            },
+            classes: [
                 {
                     name: 'Foo',
-                    decorator: {
-                        type: 'Component',
-                        options: [
-                            {
-                                name: 'foo',
-                                value: 'foo-value'
-                            },
-                            {
-                                name: 'bar',
-                                value: 'bar-value'
-                            }
-                        ]
-                    }
-                }
-            ];
-            cg(o).generate();
-
-            o.options = {
-                prettify: false,
-                isDirty: '_isDirty',
-                lastUpdated: '_lastUpdated',
-                className: '_className'
-            };
-            o.classes = [
-                {
-                    name: 'Foo',
-                    extends: 'Bar',
-                    isBaseModel: true,
-                    properties: [
+                    import: [
                         {
-                            name: 'foo',
-                            track: false
-                        }, {
-                            name: 'foo',
-                            track: true,
-                            trackDate: false,
-                            trackState: false
-                        }, {
-                            name: 'foo',
-                            track: true,
-                            trackDate: true,
-                            trackState: true
-                        }, {
-                            name: 'foo',
-                            useGetterSetter: true,
-                            canClone: true
-                        }, {
-                            name: 'foo',
-                            useGetterSetter: true,
-                            read: false,
-                            write: false,
-                            canClone: false
+                            name: 'Component',
+                            path: '@angular/core'
+                        },
+                        {
+                            name: 'OnInit',
+                            path: '@angular/core'
                         }
                     ]
+                }
+            ]
+        });
+
+        cg1 = cg({
+            options: {
+                prettify: false
+            }
+        });
+        cg1.addClass('Foo').addImport('Component', '@angular/core').addImport('OnInit', '@angular/core');
+
+        it('should return imports, empty class "Foo"', function() {
+            var z = 'import{Component,OnInit}from\'@angular/core\';export class Foo{}'
+            verify(cg0, z);
+            verify(cg1, z);
+        });
+    });
+
+    describe('#base-class', function() {
+
+        var cg0;
+        var cg1, c10, c11;
+
+        var cg0 = cg({
+            classes: [
+                {
+                    name: 'BaseClass',
+                    isBaseClass: true,
+                    properties: [
+                        {
+                            name: 'id',
+                            type: 'number',
+                            write: false,
+                        },
+                        {
+                            modifier: Modifier.PROTECTED,
+                            name: '_className',
+                            type: 'string',
+                            value: "'BaseClass'",
+                        },
+                        {
+                            name: 'className',
+                            type: 'string',
+                            write: false,
+                            declare: false,
+                        },
+                    ],
+                    constructorCode: 'this._id=IdManager.getNew();',
                 },
                 {
+                    name: 'BaseModel',
+                    extends: 'BaseClass',
+                    isBaseClass: true,
+                    properties: [
+                        {
+                            name: '_isDirty',
+                            type: 'boolean',
+                            value: 'false'
+                        },
+                        {
+                            name: '_lastUpdated',
+                            type: 'number',
+                            value: '0',
+                        },
+                    ],
+                },
+            ]
+        });
+        var c00 = cg0.classes[0];
+        var c01 = cg0.classes[1];
+
+        beforeEach(function() {
+            cg1 = cg({
+                options: {
+                    prettify: false
+                }
+            });
+            // calling setIsBaseClass twice for code coverage - has the same effect
+            c10 = cg1.addClass('BaseClass').setIsBaseClass().setIsBaseClass(true);
+            c11 = cg1.addClass('BaseModel').setIsBaseClass().addExtends('BaseClass');
+        });
+
+        it('should have 2 classes', function() {
+            expect(cg0.classes.length).equals(2);
+            expect(cg1.classes.length).equals(2);
+        });
+        it('should have "BaseClass" and "BaseModel"', function() {
+            expect(c00.name).to.equal('BaseClass');
+            expect(c01.name).to.equal('BaseModel');
+            expect(c10.name).to.equal('BaseClass');
+            expect(c11.name).to.equal('BaseModel');
+        });
+
+        // BaseClass
+        it('should be base class', function() {
+            expect(c00.isBaseClass).to.equal(true);
+            expect(c01.isBaseClass).to.equal(true);
+            expect(c10.isBaseClass).to.equal(true);
+            expect(c11.isBaseClass).to.equal(true);
+        });
+
+        // BaseModel
+        it('should extend BaseClass', function() {
+            expect(c01.extends).to.equal('BaseClass');
+            expect(c11.extends).to.equal('BaseClass');
+        });
+    });
+
+    describe('#enum', function() {
+
+        var cg0, cg1;
+        var options = {
+            prettify: false
+        };
+
+        beforeEach(function() {
+            cg1 = cg({
+                options: {
+                    prettify: false
+                }
+            });
+        });
+
+        it('should return empty string', function() {
+            var z = '';
+
+            cg0 = cg({
+                options,
+                enums: [
+                    {
+                        names: ['foo', 'bar']
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addEnum();
+            verify(cg1, z);
+        });
+        it('should return empty enum', function() {
+            var z = 'export enum Foo{}';
+
+            cg0 = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo'
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addEnum('Foo');
+            verify(cg1, z);
+        });
+        it('should return simple enum', function() {
+            var z = 'export enum Foo{foo,bar}';
+
+            cg0 = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar']
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addEnum('Foo').addItem('foo').addItem('bar');
+            verify(cg1, z);
+        });
+        it('should return number enum', function() {
+            var z = 'export enum Foo{foo=1,bar}';
+
+            cg0 = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar'],
+                        values: [1]
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addEnum('Foo').addItem('foo', 1).addItem('bar');
+            verify(cg1, z);
+        });
+        it('should return string enum', function() {
+            var z = 'export enum Foo{foo=\'foo\',bar=\'bar\'}';
+
+            cg0 = cg({
+                options,
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: ['foo', 'bar'],
+                        values: ['\'foo\'', '\'bar\'']
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addEnum('Foo').addItem('foo', '\'foo\'').addItem('bar', '\'bar\'');
+            verify(cg1, z);
+        });
+        it('should return empty enum "Foo"', function() {
+            var z = 2;
+
+            cg0 = cg({
+                options: {
+                    prettify: true
+                },
+                enums: [
+                    {
+                        name: 'Foo'
+                    }
+                ]
+            });
+            verifyLineCount(cg0, z);
+
+            cg1 = cg({
+                options: {
+                    prettify: true
+                }
+            });
+            cg1.addEnum('Foo');
+            verifyLineCount(cg1, z);
+        });
+        it('should return enum "Foo", two items', function() {
+            var z = 4;
+
+            cg0 = cg({
+                options: {
+                    prettify: true
+                },
+                enums: [
+                    {
+                        name: 'Foo',
+                        names: [
+                            'foo',
+                            'bar'
+                        ]
+                    }
+                ]
+            });
+            verifyLineCount(cg0, z);
+
+            cg1 = cg({
+                options: {
+                    prettify: true
+                }
+            });
+            cg1.addEnum('Foo').addItem('foo').addItem('bar');
+            verifyLineCount(cg1, z);
+        });
+    });
+
+    describe('#interface', function() {
+
+        var cg0, cg1;
+        var options = {
+            prettify: false
+        };
+
+        beforeEach(function() {
+            cg1 = cg({
+                options: {
+                    prettify: false
+                }
+            });
+        });
+
+        it('should return empty string', function() {
+            var z = '';
+
+            cg0 = cg({
+                options,
+                interfaces: [{}]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface();
+            verify(cg1, z);
+        });
+        it('should return empty interface', function() {
+            var z = 'export interface Foo{}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo'
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo');
+            verify(cg1, z);
+        });
+        it('should return interface"Foo", extends "Bar', function() {
+            var z = 'export interface Foo extends Bar{}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
                     name: 'Foo',
-                    canClone: true,
-                    canExport: true,
-                    canUndo: true,
-                    isBaseModel: true,
+                    extends: 'Bar'
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addExtends('Bar');
+            verify(cg1, z);
+        });
+        it('should return empty interface "Foo"', function() {
+            var z = 'export interface Foo{}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    properties: [
+                        {}
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addMethod();
+            verify(cg1, z);
+        });
+        it('should return interface with property "foo"', function() {
+            var z = 'export interface Foo{foo:any;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
                     properties: [
                         {
                             name: 'foo'
-                        },
-                        {
-                            name: 'foo',
-                            canClone: false,
-                            canExport: false
                         }
                     ]
-                },
-                {
-                    name: 'Bar',
-                    extends: 'Foo',
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addProperty('foo');
+            verify(cg1, z);
+        });
+        it('should return interface with property "foo" of type "string"', function() {
+            var z = 'export interface Foo{foo:string;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
                     properties: [
+                        {
+                            name: 'foo',
+                            type: 'string'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addProperty('foo').setType('string');
+            verify(cg1, z);
+        });
+        it('should return interface with optional property "foo"', function() {
+            var z = 'export interface Foo{foo?:any;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            optional: true
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addProperty('foo').setOptional();
+            verify(cg1, z);
+        });
+        it('should return empty interface "Foo"', function() {
+            var z = 'export interface Foo{}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {}
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addMethod();
+            verify(cg1, z);
+        });
+        it('should return interface with method "foo"', function() {
+            var z = 'export interface Foo{foo():void;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addMethod('foo');
+            verify(cg1, z);
+        });
+        it('should return interface with method "foo" of type "string"', function() {
+            var z = 'export interface Foo{foo():string;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addInterface('Foo').addMethod('foo').setType('string');
+            verify(cg1, z);
+        });
+        it('should return interface with method "foo" of type "string", arg "bar"', function() {
+            var z = 'export interface Foo{foo(bar:any):string;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string',
+                            args: [
+                                {
+                                    name: 'bar'
+                                }
+                            ]
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            var i = cg1.addInterface('Foo').addMethod('foo').setType('string');
+            i.addArg('bar');
+            verify(cg1, z);
+        });
+        it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function() {
+            var z = 'export interface Foo{foo(bar:boolean):string;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            type: 'string',
+                            args: [
+                                {
+                                    name: 'bar',
+                                    type: 'boolean'
+                                }
+                            ]
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            var i = cg1.addInterface('Foo').addMethod('foo').setType('string');
+            i.addArg('bar').setType('boolean');
+            verify(cg1, z);
+        });
+        it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function() {
+            var z = 'export interface Foo{foo(bar?:boolean):string;}';
+
+            cg0 = cg({
+                options,
+                interfaces: [{
+                    name: 'Foo',
+                    methods: [{
+                        name: 'foo',
+                        type: 'string',
+                        args: [{
+                            name: 'bar',
+                            type: 'boolean',
+                            optional: true
+                        }]
+                    }]
+                }]
+            });
+            verify(cg0, z);
+
+            var i = cg1.addInterface('Foo').addMethod('foo').setType('string');
+            i.addArg('bar').setType('boolean').setOptional();
+            verify(cg1, z);
+        });
+        it('should not render extra new line', function() {
+            var z = 4;
+
+            cg0 = cg({
+                options: {
+                    prettify: true
+                },
+                "interfaces": [{
+                    "name": "Event",
+                    "properties": [{
+                        "name": "type",
+                        "type": "EventType"
+                    },
+                    {
+                        "name": "data",
+                        "optional": true
+                    }
+                    ]
+                }]
+            });
+            verifyLineCount(cg0, z);
+
+            cg1 = cg({
+                options: {
+                    prettify: true
+                }
+            });
+            var i = cg1.addInterface('Event');
+            i.addProperty('type').setType('EventType');
+            i.addProperty('data').setOptional(true);
+            verifyLineCount(cg1, z);
+        });
+    });
+
+    describe('#class', function() {
+
+        var cg0, cg1;
+        var options = {
+            prettify: false
+        };
+
+        beforeEach(function() {
+            cg1 = cg({
+                options: {
+                    prettify: false
+                }
+            });
+        });
+
+        it('should return empty string', function() {
+            var z = '';
+
+            cg0 = cg({
+                options,
+                classes: [{}]
+            });
+            verify(cg0, z);
+
+            cg1.addClass();
+            verify(cg0, z);
+        });
+        it('should return empty class, isBaseClass', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [
+                    {
+                        name: 'Foo',
+                        isBaseClass: true
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').setIsBaseClass();
+            verify(cg0, z);
+        });
+        it('should return empty class "Foo"', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo'
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo');
+            verify(cg1, z);
+        });
+        it('should return empty class "Foo"', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [
+                    {
+                        name: 'Foo',
+                        args: [
+                            {}
+                        ]
+                    }
+                ]
+            });
+
+            cg1.addClass('Foo').addArg();
+            verify(cg1, z);
+        });
+        it('should return class "Foo", extends "Bar"', function() {
+            var z = 'export class Foo extends Bar{constructor(){super();}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar'
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addExtends('Bar');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", extends "Bar", "_className"', function() {
+            var className = '_className';
+            var z = 'export class Foo extends Bar{constructor(){super();this._className=\'Foo\';}}';
+
+            cg0 = cg({
+                options: {
+                    className,
+                    prettify: false
+                },
+                classes: [
+                    {
+                        name: 'Foo',
+                        extends: 'Bar'
+                    }
+                ]
+            });
+            expect(cg0.classes[0].className).to.eq(className);
+            verify(cg0, z);
+
+            cg1.options.className = className;
+            cg1.addClass('Foo').addExtends('Bar');
+            expect(cg1.classes[0].className).to.eq(className);
+            verify(cg1, z);
+        });
+        it('should return class "Foo", implements "Bar"', function() {
+            var z = 'export class Foo implements Bar{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    implements: ['Bar']
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addImplements('Bar');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", implements "Bar" and "Bar2"', function() {
+            var z = 'export class Foo implements Bar,Bar2{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    implements: ['Bar', 'Bar2']
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addImplements('Bar').addImplements('Bar2');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
+            var z = 'export class Foo extends Bar implements Bar2{constructor(){super();}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar',
+                    implements: ['Bar2']
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addExtends('Bar').addImplements('Bar2');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", arg "foo"', function() {
+            var z = 'export class Foo{constructor(foo:any){}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    args: [{
+                        name: 'foo'
+                    }]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addArg('foo');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", optional arg "foo"', function() {
+            var z = 'export class Foo{constructor(foo?:any){}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    args: [{
+                        name: 'foo',
+                        optional: true
+                    }]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addArg('foo').setOptional();
+            verify(cg1, z);
+        });
+        it('should return class "Foo", extends "Bar", super arg "foo"', function() {
+            var z = 'export class Foo extends Bar{constructor(){super(foo);}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    extends: 'Bar',
+                    superArgs: [{
+                        name: 'foo'
+                    }]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addExtends('Bar').addSuperArg('foo');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", no property "foo"', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        undefined
+                    ]
+                }]
+            });
+            verify(cg0, z);
+        });
+        it('should return class "Foo", property "foo", inferType', function() {
+            var z = 'export class Foo{public foo:any;}';
+
+            cg0 = cg({
+                options: {
+                    ...options,
+                    inferType: true
+                },
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addProperty('foo');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", property "id" with getter and setter bodies', function() {
+            var z = 'export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'id',
+                            type: 'number',
+                            value: 0,
+                            getterBody: 'return this._id;',
+                            setterBody: 'throw new Error(\'"id" cannot be set\');'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addProperty('id').setType('number').setValue(0).setGetter('return this._id;').setSetter('throw new Error(\'"id" cannot be set\');');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", static property "id"', function() {
+            var z = 'export class Foo{public static _id:number=new Date().getTime();}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: '_id',
+                            type: 'number',
+                            static: true,
+                            value: 'new Date().getTime()'
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            var p = cg1.addClass('Foo').addProperty('_id');
+            p.setType('number').setStatic().setValue('new Date().getTime()');
+            verify(cg1, z);
+
+            p.setStatic(true);
+            verify(cg1, z);
+        });
+        it('should return class "Foo", protected property "_className"', function() {
+            var z = 'export class Foo{protected _className:string=\'BaseClass\';}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: '_className',
+                            type: 'string',
+                            modifier: 'protected',
+                            read: false,
+                            write: false,
+                            value: '\'BaseClass\''
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addProperty('_className').setType('string').setModifier('protected').setRead(false).setWrite(false).setValue('\'BaseClass\'');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", no getter/setter "foo"', function() {
+            var z = 'export class Foo{public foo:any;}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            useGetterSetter: true,
+                            read: false,
+                            write: false
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+        });
+        it('should return class "Foo", getter/setter "foo"', function() {
+            var z = 'export class Foo{private _foo:any;public get foo():any{return this._foo;}public set foo(value:any){this._foo=value;}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            useGetterSetter: true
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+        });
+        it('should return class "Foo", getter/setter "foo", track', function() {
+            var z = 'export class Foo{private _foo:any;public get foo():any{return this._foo;}public set foo(value:any){this._foo=value;this._isDirty=true;this._lastUpdated=(new Date()).getTime();}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            track: true
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            var p = cg1.addClass('Foo').addProperty('foo').setTrack();
+            verify(cg1, z);
+
+            p.setTrack(true);
+            verify(cg1, z);
+        });
+        it('should return class "Foo", getter/setter "foo", track, isDirty & lastUpdated', function() {
+            var z = 'export class Foo{private _foo:any;public get foo():any{return this._foo;}public set foo(value:any){this._foo=value;this._isDirty=true;this._lastUpdated=(new Date()).getTime();}}';
+
+            cg0 = cg({
+                options: {
+                    ...options,
+                    isDirty: '_isDirty',
+                    lastUpdated: '_lastUpdated'
+                },
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            track: true
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addProperty('foo').setTrack();
+            verify(cg1, z);
+        });
+        it('should return class "Foo", getter/setter "foo", track, no track state/date', function() {
+            var z = 'export class Foo{private _foo:any;public get foo():any{return this._foo;}public set foo(value:any){this._foo=value;}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
+                        {
+                            name: 'foo',
+                            useGetterSetter: true,
+                            track: true,
+                            trackState: false,
+                            trackDate: false
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addProperty('foo').setTrack().setTrackState(false).setTrackDate(false);
+            verify(cg1, z);
+        });
+        it('should return class "Foo", no decorator', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    decorator: {}
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addDecorator();
+            verify(cg1, z);
+        });
+        it('should return class "Foo", decorator @Component, one option', function() {
+            var z = '@Component({selector:\'some-component\'}) export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    decorator: {
+                        type: "Component",
+                        options: [
+                            {
+                                name: 'selector',
+                                value: "'some-component'"
+                            }
+                        ]
+                    }
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addDecorator('Component').addOption('selector', '\'some-component\'');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", decorator @Component, two options', function() {
+            var z = '@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{}';
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    decorator: {
+                        type: "Component",
+                        options: [
+                            {
+                                name: 'selector',
+                                value: "'some-component'"
+                            },
+                            {
+                                name: 'templateUrl',
+                                value: "'some-component.html'"
+                            }
+                        ]
+                    }
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addDecorator('Component').addOption('selector', '\'some-component\'').addOption('templateUrl', '\'some-component.html\'');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", decorator @Component, one option, prettified', function() {
+            var z = 5;
+
+            cg0 = cg({
+                options: {
+                    inferType: true,
+                    prettify: true
+                },
+                classes: [
+                    {
+                        name: 'Foo',
+                        decorator: {
+                            type: 'Component',
+                            options: [
+                                {
+                                    name: 'selector',
+                                    value: "'some-component'"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            });
+            verifyLineCount(cg0, z);
+
+            cg1 = cg({
+                options: {
+                    inferType: true,
+                    prettify: true
+                }
+            });
+            var c = cg1.addClass('Foo');
+            c.addDecorator('Component').addOption('selector', '\'some-component\'');
+            verifyLineCount(cg1, z);
+        });
+        it('should return class "Foo", two constructor args', function() {
+            var z = 'export class Foo{constructor(foo:any,bar:any){}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    args: [
                         {
                             name: 'foo'
                         },
@@ -309,771 +1205,131 @@ describe('code-gen-ts', function() {
                             name: 'bar'
                         }
                     ]
-                }
-            ];
-            cg(o).generate();
+                }]
+            });
+            verify(cg0, z);
 
-            o.options = {
-                prettify: undefined
-            };
-            cg(o).generate();
+            var c = cg1.addClass('Foo');
+            c.addArg('foo');
+            c.addArg('bar');
+            verify(cg1, z);
         });
-    });
+        it('should return empty class "Foo" (property "foo", no declare)', function() {
+            var z = 'export class Foo{}';
 
-    describe('#json', function() {
-        describe('#base-classes', function() {
-
-            var z = cg({
-                classes: [
-                    {
-                        name: 'BaseClass',
-                        isBaseClass: true,
-                        properties: [
-                            {
-                                name: 'id',
-                                type: 'number',
-                                write: false,
-                            },
-                            {
-                                modifier: Modifier.PROTECTED,
-                                name: '_className',
-                                type: 'string',
-                                value: "'BaseClass'",
-                            },
-                            {
-                                name: 'className',
-                                type: 'string',
-                                write: false,
-                                declare: false,
-                            },
-                        ],
-                        constructorCode: 'this._id=IdManager.getNew();',
-                    },
-                    {
-                        name: 'BaseModel',
-                        extends: 'BaseClass',
-                        isBaseClass: true,
-                        properties: [
-                            {
-                                name: '_isDirty',
-                                type: 'boolean',
-                                value: 'false'
-                            },
-                            {
-                                name: '_lastUpdated',
-                                type: 'number',
-                                value: '0',
-                            },
-                        ],
-                    },
-                ]
-            });
-            var c0 = z.classes[0];
-            var c1 = z.classes[1];
-
-            it('should have 2 classes', function() {
-                expect(z.classes.length).greaterThan(0);
-                expect(z.classes.length).equals(2);
-            });
-            it('should have "BaseClass" and "BaseModel"', function() {
-                expect(c0.name).to.equal('BaseClass');
-                expect(c1.name).to.equal('BaseModel');
-            });
-
-            // BaseClass
-            it('should be base class', function() {
-                expect(c0.isBaseClass).to.equal(true);
-                expect(c0.isBaseClass).to.equal(true);
-            });
-
-            // BaseModel
-            it('should extend BaseClass', function() {
-                expect(c1.extends).to.equal('BaseClass');
-            });
-        });
-
-        describe('#enum', function() {
-
-            var options = {
-                prettify: false
-            };
-
-            it('should return empty string', function() {
-                var z = cg({
-                    options,
-                    enums: [
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    properties: [
                         {
-                            names: ['foo', 'bar']
-                        }
-                    ]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty enum', function() {
-                var z = cg({
-                    options,
-                    enums: [
-                        {
-                            name: 'Foo'
-                        }
-                    ]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{}');
-            });
-            it('should return simple enum', function() {
-                var z = cg({
-                    options,
-                    enums: [
-                        {
-                            name: 'Foo',
-                            names: ['foo', 'bar']
-                        }
-                    ]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo,bar}');
-            });
-            it('should return number enum', function() {
-                var z = cg({
-                    options,
-                    enums: [
-                        {
-                            name: 'Foo',
-                            names: ['foo', 'bar'],
-                            values: [1]
-                        }
-                    ]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo=1,bar}');
-            });
-            it('should return string enum', function() {
-                var z = cg({
-                    options,
-                    enums: [
-                        {
-                            name: 'Foo',
-                            names: ['foo', 'bar'],
-                            values: ['\'foo\'', '\'bar\'']
-                        }
-                    ]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo=\'foo\',bar=\'bar\'}');
-            });
-        });
-
-        describe('#interface', function() {
-
-            var options = {
-                prettify: false
-            };
-
-            it('should return empty string', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{}]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty interface', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo'
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{}');
-            });
-            it('should return interface with property "foo"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: 'foo'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo:any;}');
-            });
-            it('should return interface with property "foo" of type "string"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: 'foo',
-                                type: 'string'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo:string;}');
-            });
-            it('should return interface with optional property "foo"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: 'foo',
-                                optional: true
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo?:any;}');
-            });
-            it('should return interface with method "foo"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        methods: [
-                            {
-                                name: 'foo'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo():void;}');
-            });
-            it('should return interface with method "foo" of type "string"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        methods: [
-                            {
-                                name: 'foo',
-                                type: 'string'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo():string;}');
-            });
-            it('should return interface with method "foo" of type "string", arg "bar"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        methods: [
-                            {
-                                name: 'foo',
-                                type: 'string',
-                                args: [
-                                    {
-                                        name: 'bar'
-                                    }
-                                ]
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar:any):string;}');
-            });
-            it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        methods: [
-                            {
-                                name: 'foo',
-                                type: 'string',
-                                args: [
-                                    {
-                                        name: 'bar',
-                                        type: 'boolean'
-                                    }
-                                ]
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar:boolean):string;}');
-            });
-            it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function() {
-                var z = cg({
-                    options,
-                    interfaces: [{
-                        name: 'Foo',
-                        methods: [{
                             name: 'foo',
-                            type: 'string',
-                            args: [{
-                                name: 'bar',
-                                type: 'boolean',
-                                optional: true
-                            }]
-                        }]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar?:boolean):string;}');
+                            declare: false
+                        }
+                    ]
+                }]
             });
-            it('should not render extra new line', function() {
-                var z = cg({
-                    options: {
-                        prettify: true
-                    },
-                    "interfaces": [{
-                        "name": "Event",
-                        "properties": [{
-                            "name": "type",
-                            "type": "EventType"
-                        },
+            verify(cg0, z);
+
+            var p = cg1.addClass('Foo').addProperty('foo').setDeclare(false);
+            verify(cg1, z);
+
+            p.setDeclare();
+            verify(cg1, z);
+        });
+        it('should return empty class "Foo", no method', function() {
+            var z = 'export class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    methods: [
+                        {}
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addMethod();
+            verify(cg1, z);
+        });
+        it('should return class "Foo", method "foo"', function() {
+            var z = 'export class Foo{public foo():void{return;}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    methods: [
                         {
-                            "name": "data",
-                            "optional": true
-                        }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                var o = g.output.split(/[\n\r]/);
-                expect(o.length).to.equal(4);
-            });
-        });
-
-        describe('#class', function() {
-
-            var options = {
-                prettify: false
-            };
-
-            it('should return empty string', function() {
-                var z = cg({
-                    options,
-                    classes: [{}]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty class "Foo"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo'
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{}');
-            });
-            it('should return class "Foo", extends "Bar"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        extends: 'Bar'
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar{constructor(){super();}}');
-            });
-            it('should return class "Foo", implements "Bar"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        implements: ['Bar']
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo implements Bar{}');
-            });
-            it('should return class "Foo", implements "Bar" and "Bar2"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        implements: ['Bar', 'Bar2']
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo implements Bar,Bar2{}');
-            });
-            it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        extends: 'Bar',
-                        implements: ['Bar2']
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar implements Bar2{constructor(){super();}}');
-            });
-            it('should return class "Foo", arg "foo"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        args: [{
                             name: 'foo'
-                        }]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{constructor(foo:any){}}');
-            });
-            it('should return class "Foo", extends "Bar", super arg "foo"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        extends: 'Bar',
-                        superArgs: [{
-                            name: 'foo'
-                        }]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);}}');
-            });
-            it('should return class "Foo", property "id" with getter and setter bodies', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: 'id',
-                                type: 'number',
-                                value: 0,
-                                getterBody: 'return this._id;',
-                                setterBody: 'throw new Error(\'"id" cannot be set\');'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}}');
-            });
-            it('should return class "Foo", static property "id"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: '_id',
-                                type: 'number',
-                                static: true,
-                                value: 'new Date().getTime()'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{public static _id:number=new Date().getTime();}');
-            });
-            it('should return class "Foo", protected property "_className"', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        properties: [
-                            {
-                                name: '_className',
-                                type: 'string',
-                                modifier: 'protected',
-                                read: false,
-                                write: false,
-                                value: '\'BaseClass\''
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';}');
-            });
-            it('should return class "Foo", decorator @Component, one option', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        decorator: {
-                            type: "Component",
-                            options: [
-                                {
-                                    name: 'selector',
-                                    value: "'some-component'"
-                                }
-                            ]
                         }
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('@Component({selector:\'some-component\'}) export class Foo{}');
+                    ]
+                }]
             });
-            it('should return class "Foo", decorator @Component, two options', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        decorator: {
-                            type: "Component",
-                            options: [
-                                {
-                                    name: 'selector',
-                                    value: "'some-component'"
-                                },
-                                {
-                                    name: 'templateUrl',
-                                    value: "'some-component.html'"
-                                }
-                            ]
+            verify(cg0, z);
+
+            cg1.addClass('Foo').addMethod('foo');
+            verify(cg1, z);
+        });
+        it('should return class "Foo", static method "foo"', function() {
+            var z = 'export class Foo{public static foo():void{return;}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    methods: [
+                        {
+                            name: 'foo',
+                            static: true
                         }
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{}');
+                    ]
+                }]
             });
-            it('should return class "Foo", two constructor args', function() {
-                var z = cg({
-                    options,
-                    classes: [{
-                        name: 'Foo',
-                        args: [
-                            {
-                                name: 'foo'
-                            },
-                            {
-                                name: 'bar'
-                            }
-                        ]
-                    }]
-                });
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{constructor(foo:any,bar:any){}}');
-            });
+            verify(cg0, z);
+
+            var m = cg1.addClass('Foo').addMethod('foo');
+            m.setStatic();
+            verify(cg1, z);
+
+            m.setStatic(true);
+            verify(cg1, z);
         });
-    });
+        it('should return class "Foo", class "Bar" extends "Foo"', function() {
+            var z = 0;
 
-    describe('#api', function() {
+            var c0 = cg1.addClass('Foo').setIsBaseModel().setCanClone().setCanExport();
+            c0.addProperty('foo');
+            c0.addProperty('bar');
+            var c1 = cg1.addClass('Boo').addExtends('Foo');
+            c1.addProperty('foo');
+            c1.addProperty('bar');
+            var p = c1.addProperty('bar2').setCanClone(false).setCanExport(false);
+            var c2 = cg1.addClass('Foo').setIsBaseModel().setCanUndo();
 
-        describe('#enum', function() {
+            var g1 = cg1.generate();
+            expect(g1.output.length).to.gt(0);
 
-            var z;
-
-            beforeEach(function() {
-                z = cg({
-                    options: {
-                        prettify: false
-                    }
-                });
-            });
-
-            it('should return empty string', function() {
-                z.addEnum();
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty enum', function() {
-                z.addEnum('Foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{}');
-            });
-            it('should return simple enum', function() {
-                z.addEnum('Foo').addItem('foo').addItem('bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo,bar}');
-            });
-            it('should return number enum', function() {
-                z.addEnum('Foo').addItem('foo', 1).addItem('bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo=1,bar}');
-            });
-            it('should return string enum', function() {
-                z.addEnum('Foo').addItem('foo', '\'foo\'').addItem('bar', '\'bar\'');
-                var g = z.generate();
-                expect(g.output).to.equal('export enum Foo{foo=\'foo\',bar=\'bar\'}');
-            });
+            c0.setCanClone(true).setCanExport(true).setCanUndo(true).setIsBaseModel(true);
+            var g2 = cg1.generate();
+            expect(g2.output.length).to.gt(0);
         });
+        it('should return class "Foo", constructor code', function() {
+            var z = 'export class Foo{constructor(){return;}}';
 
-        describe('#interface', function() {
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    constructorCode: 'return;'
+                }]
+            });
+            verify(cg0, z);
 
-            var z;
-
-            beforeEach(function() {
-                z = cg({
-                    options: {
-                        prettify: false
-                    }
-                });
-            });
-
-            it('should return empty string', function() {
-                z.addInterface();
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty interface', function() {
-                z.addInterface('Foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{}');
-            });
-            it('should return interface with property "foo"', function() {
-                z.addInterface('Foo').addProperty('foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo:any;}');
-            });
-            it('should return interface with property "foo" of type "string"', function() {
-                z.addInterface('Foo').addProperty('foo').setType('string');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo:string;}');
-            });
-            it('should return interface with optional property "foo"', function() {
-                z.addInterface('Foo').addProperty('foo').setOptional();
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo?:any;}');
-            });
-            it('should return interface with method "foo"', function() {
-                z.addInterface('Foo').addMethod('foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo():void;}');
-            });
-            it('should return interface with method "foo" of type "string"', function() {
-                z.addInterface('Foo').addMethod('foo').setType('string');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo():string;}');
-            });
-            it('should return interface with method "foo" of type "string", arg "bar"', function() {
-                var i = z.addInterface('Foo').addMethod('foo').setType('string');
-                i.addArg('bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar:any):string;}');
-            });
-            it('should return interface with method "foo" of type "string", arg "bar" of type "boolean"', function() {
-                var i = z.addInterface('Foo').addMethod('foo').setType('string');
-                i.addArg('bar').setType('boolean');
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar:boolean):string;}');
-            });
-            it('should return interface with method "foo" of type "string", optional arg "bar" of type "boolean"', function() {
-                var i = z.addInterface('Foo').addMethod('foo').setType('string');
-                i.addArg('bar').setType('boolean').setOptional();
-                var g = z.generate();
-                expect(g.output).to.equal('export interface Foo{foo(bar?:boolean):string;}');
-            });
-            it('should not render extra new line', function() {
-                z = cg({
-                    options: {
-                        prettify: true
-                    }
-                });
-                var i = z.addInterface('Event');
-                i.addProperty('type').setType('EventType');
-                i.addProperty('data').setOptional(true);
-                var g = z.generate();
-                var o = g.output.split(/[\n\r]/);
-                expect(o.length).to.equal(4);
-            });
-        });
-
-        describe('#class', function() {
-
-            var z;
-
-            beforeEach(function() {
-                z = cg({
-                    options: {
-                        prettify: false
-                    }
-                });
-            });
-
-            it('should return empty string', function() {
-                z.addClass();
-                var g = z.generate();
-                expect(g.output).to.equal('');
-            });
-            it('should return empty class "Foo"', function() {
-                z.addClass('Foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{}');
-            });
-            it('should return class "Foo", extends "Bar"', function() {
-                z.addClass('Foo').addExtends('Bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar{constructor(){super();}}');
-            });
-            it('should return class "Foo", implements "Bar"', function() {
-                z.addClass('Foo').addImplements('Bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo implements Bar{}');
-            });
-            it('should return class "Foo", implements "Bar" and "Bar2"', function() {
-                z.addClass('Foo').addImplements('Bar').addImplements('Bar2');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo implements Bar,Bar2{}');
-            });
-            it('should return class "Foo", extends "Bar", implements "Bar2"', function() {
-                z.addClass('Foo').addExtends('Bar').addImplements('Bar2');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar implements Bar2{constructor(){super();}}');
-            });
-            it('should return class "Foo", arg "foo"', function() {
-                z.addClass('Foo').addArg('foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{constructor(foo:any){}}');
-            });
-            it('should return class "Foo", extends "Bar", super arg "foo"', function() {
-                z.addClass('Foo').addExtends('Bar').addSuperArg('foo');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo extends Bar{constructor(){super(foo);}}');
-            });
-            it('should return class "Foo", property "id" with getter and setter bodies', function() {
-                z.addClass('Foo').addProperty('id').setType('number').setValue(0).setGetter('return this._id;').setSetter('throw new Error(\'"id" cannot be set\');');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{private _id:number=0;public get id():number{return this._id;}public set id(value:number){throw new Error(\'"id" cannot be set\');}}');
-            });
-            it('should return class "Foo", static property "id"', function() {
-                z.addClass('Foo').addProperty('_id').setType('number').setStatic().setValue('new Date().getTime()');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{public static _id:number=new Date().getTime();}');
-            });
-            it('should return class "Foo", protected property "_className"', function() {
-                z.addClass('Foo').addProperty('_className').setType('string').setModifier('protected').setRead(false).setWrite(false).setValue('\'BaseClass\'');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{protected _className:string=\'BaseClass\';}');
-            });
-            it('should return class "Foo", decorator @Component, one option', function() {
-                z.addClass('Foo').addDecorator('Component').addOption('selector', '\'some-component\'');
-                var g = z.generate();
-                expect(g.output).to.equal('@Component({selector:\'some-component\'}) export class Foo{}');
-            });
-            it('should return class "Foo", decorator @Component, two options', function() {
-                z.addClass('Foo').addDecorator('Component').addOption('selector', '\'some-component\'').addOption('templateUrl', '\'some-component.html\'');
-                var g = z.generate();
-                expect(g.output).to.equal('@Component({selector:\'some-component\',templateUrl:\'some-component.html\'}) export class Foo{}');
-            });
-            it('should return class "Foo", two constructor args', function() {
-                var c = z.addClass('Foo');
-                c.addArg('foo');
-                c.addArg('bar');
-                var g = z.generate();
-                expect(g.output).to.equal('export class Foo{constructor(foo:any,bar:any){}}');
-            });
+            cg1.addClass('Foo').setConstructorCode('return;');
+            verify(cg1, z);
         });
     });
 });

@@ -31,6 +31,7 @@ class Base {
         }
 
         this.newline = NEWLINE;
+        this.options = options;
         this.space = SPACE;
         this.tab = TAB;
     }
@@ -38,11 +39,13 @@ class Base {
     formatStringArray(a, prettify) {
         toString(prettify);
 
-        if (prettify === true) {
-            return a.join(this.newline);
-        } else {
-            return a.join(this.space);
-        }
+        var s = (prettify === true)
+            ? this.newline
+            : this.space;
+
+        return a.filter((a_) => {
+            return !_isNullOrEmpty(a_);
+        }).join(s);
     }
     getImportString(im, prettify) {
         this.toString(prettify);
@@ -109,6 +112,27 @@ class BaseClass extends Base {
         this.extends = value;
         return this;
     }
+    addImport(name, path) {
+        this.import.push({
+            name,
+            path
+        });
+        return this;
+    }
+    addMethod(name) {
+        var m = new Method({
+            name
+        }, this.options);
+        this.methods.push(m);
+        return m;
+    }
+    addProperty(name) {
+        var p = new Property({
+            name
+        }, this.options);
+        this.properties.push(p);
+        return p;
+    }
 }
 
 class Class extends BaseClass {
@@ -128,7 +152,6 @@ class Class extends BaseClass {
         this.implements = [];
         this.isBaseClass = false;
         this.isBaseModel = false;
-        this.properties = [];
         this.superArgs = [];
 
         if (options !== undefined) {
@@ -165,14 +188,14 @@ class Class extends BaseClass {
     addArg(name) {
         var p = new Property({
             name
-        });
+        }, this.options);
         this.args.push(p);
         return p;
     }
     addDecorator(type) {
         var d = new Decorator({
             type
-        });
+        }, this.options);
         this.decorator = d;
         return d;
     }
@@ -180,19 +203,51 @@ class Class extends BaseClass {
         this.implements.push(value);
         return this;
     }
-    addProperty(name) {
-        var p = new Property({
-            name
-        });
-        this.properties.push(p);
-        return p;
-    }
     addSuperArg(name) {
         var p = new Property({
             name
-        });
+        }, this.options);
         this.superArgs.push(p);
         return p;
+    }
+    setCanClone(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.canClone = value;
+        return this;
+    }
+    setCanExport(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.canExport = value;
+        return this;
+    }
+    setCanUndo(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.canUndo = value;
+        return this;
+    }
+    setConstructorCode(value) {
+        this.constructorCode = value;
+        return this;
+    }
+    setIsBaseClass(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.isBaseClass = value;
+        return this;
+    }
+    setIsBaseModel(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.isBaseModel = value;
+        return this;
     }
     toString(prettify) {
         if (_isNullOrEmpty(this.name)) {
@@ -558,20 +613,6 @@ class Interface extends BaseClass {
         super(data, options);
     }
 
-    addMethod(name) {
-        var m = new Method({
-            name
-        });
-        this.methods.push(m);
-        return m;
-    }
-    addProperty(name) {
-        var p = new Property({
-            name
-        });
-        this.properties.push(p);
-        return p;
-    }
     toString(prettify) {
         if (_isNullOrEmpty(this.name)) {
             return '';
@@ -638,6 +679,13 @@ class Method extends Base {
         });
         this.args.push(p);
         return p;
+    }
+    setStatic(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.static = value;
+        return this;
     }
     setType(value) {
         this.type = value;
@@ -719,21 +767,40 @@ class Property extends Base {
         }
 
         if ((this.track === true) || !_isNullOrEmpty(this.getterBody) || !_isNullOrEmpty(this.setterBody)) {
+
             this.useGetterSetter = true;
         }
     }
 
+    setCanClone(value) {
+        this.canClone = value;
+        return this;
+    }
+    setCanExport(value) {
+        this.canExport = value;
+        return this;
+    }
+    setDeclare(value) {
+        if (_isNullOrUndefined(value)) {
+            value = false;
+        }
+        this.declare = value;
+        return this;
+    }
     setGetter(value) {
         this.getterBody = value;
-        this.useGetterSetter = true;
+        this.useGetterSetter = !_isNullOrEmpty(value);
         return this;
     }
     setModifier(value) {
         this.modifier = value;
         return this;
     }
-    setOptional() {
-        this.optional = true;
+    setOptional(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.optional = value;
         return this;
     }
     setRead(value) {
@@ -742,11 +809,30 @@ class Property extends Base {
     }
     setSetter(value) {
         this.setterBody = value;
-        this.useGetterSetter = true;
+        this.useGetterSetter = !_isNullOrEmpty(value);
         return this;
     }
-    setStatic() {
-        this.static = true;
+    setStatic(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.static = value;
+        return this;
+    }
+    setTrack(value) {
+        if (_isNullOrUndefined(value)) {
+            value = true;
+        }
+        this.track = value;
+        this.useGetterSetter = value;
+        return this;
+    }
+    setTrackDate(value) {
+        this.trackDate = value;
+        return this;
+    }
+    setTrackState(value) {
+        this.trackState = value;
         return this;
     }
     setType(value) {
@@ -874,17 +960,8 @@ class CodeGen extends Base {
             TAB = new Array(this.tabSize + 1).join(SPACE);
 
             if (def.classes !== undefined) {
-                var hasBaseModel = false;
                 this.classes = def.classes.map((c) => {
-                    if (c.isBaseModel === true) {
-                        hasBaseModel = true;
-                    }
-                    var cl = new Class(c, def.options);
-                    if ((cl.isBaseModel === false) && (hasBaseModel === true)) {
-                        cl.canClone = true;
-                        cl.canExport = true;
-                    }
-                    return cl;
+                    return new Class(c, def.options);
                 });
             }
 
@@ -905,21 +982,21 @@ class CodeGen extends Base {
     addClass(name) {
         var c = new Class({
             name
-        });
+        }, this.options);
         this.classes.push(c);
         return c;
     }
     addEnum(name) {
         var e = new Enum({
             name
-        });
+        }, this.options);
         this.enums.push(e);
         return e;
     }
     addInterface(name) {
         var i = new Interface({
             name
-        });
+        }, this.options);
         this.interfaces.push(i);
         return i;
     }
@@ -937,14 +1014,24 @@ class CodeGen extends Base {
             z.enums.push(e.name);
             s.push(e.toString(this.prettify));
         });
+
         this.interfaces.forEach((n) => {
             z.interfaces.push(n.name);
             s.push(n.toString(this.prettify));
             i.push(...n.import);
         });
+
+        var hasBaseModel = false;
         this.classes.forEach((c) => {
             if (c.isBaseClass === false) {
                 z.classes.push(c.name);
+            }
+            if (c.isBaseModel === true) {
+                hasBaseModel = true;
+            }
+            if ((c.isBaseModel === false) && (hasBaseModel === true)) {
+                c.canClone = true;
+                c.canExport = true;
             }
             s.push(c.toString(this.prettify));
             i.push(...c.import);
