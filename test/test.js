@@ -1331,5 +1331,82 @@ describe('code-gen-ts', function() {
             cg1.addClass('Foo').setConstructorCode('return;');
             verify(cg1, z);
         });
+        it('should return abstract class "Foo"', function() {
+            var z = 'export abstract class Foo{}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    isAbstract: true
+                }]
+            });
+            verify(cg0, z);
+
+            cg1.addClass('Foo').setIsAbstract(true);
+            verify(cg1, z);
+        });
+        it('should return abstract class "Foo", abstract method "foo", method "bar", class "Bar"', function() {
+            var z = 'export abstract class Foo{abstract public foo():void;public bar():void{return;}}export class Bar{}';
+
+            cg0 = cg({
+                options,
+                classes: [
+                    {
+                        name: 'Foo',
+                        isAbstract: true,
+                        methods: [
+                            {
+                                name: 'foo',
+                                isAbstract: true
+                            },
+                            {
+                                name: 'bar',
+                                isAbstract: null
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Bar',
+                        isAbstract: null
+                    }
+                ]
+            });
+            verify(cg0, z);
+
+            var c1 = cg1.addClass('Foo').setIsAbstract(true);
+            c1.addMethod('foo').setIsAbstract(true);
+            c1.addMethod('bar').setIsAbstract(undefined);
+            cg1.addClass('Bar').setIsAbstract(undefined);
+            verify(cg1, z);
+        });
+        it('should return abstract class "Foo", empty abstract method "foo" with empty body, method "bar"', function() {
+            var z = 'export abstract class Foo{abstract public foo():void;public bar():void{return;}}';
+
+            cg0 = cg({
+                options,
+                classes: [{
+                    name: 'Foo',
+                    isAbstract: true,
+                    methods: [
+                        {
+                            name: 'foo',
+                            isAbstract: true,
+                            body: 'return;'
+                        },
+                        {
+                            name: 'bar',
+                            isAbstract: null
+                        }
+                    ]
+                }]
+            });
+            verify(cg0, z);
+
+            var c1 = cg1.addClass('Foo').setIsAbstract(true);
+            c1.addMethod('foo').setIsAbstract(true).setBody('return;');
+            c1.addMethod('bar').setIsAbstract(undefined).setBody(undefined);
+            verify(cg1, z);
+        });
     });
 });

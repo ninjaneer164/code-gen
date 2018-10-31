@@ -150,6 +150,7 @@ class Class extends BaseClass {
         this.decorator = null;
         this.exports = [];
         this.implements = [];
+        this.isAbstract = false;
         this.isBaseClass = false;
         this.isBaseModel = false;
         this.superArgs = [];
@@ -178,7 +179,7 @@ class Class extends BaseClass {
                 return new Property(a, options);
             });
         }
-        ['canClone', 'canExport', 'canUndo', 'constructorCode', 'implements', 'isBaseClass', 'isBaseModel'].forEach((k) => {
+        ['canClone', 'canExport', 'canUndo', 'constructorCode', 'implements', 'isAbstract', 'isBaseClass', 'isBaseModel'].forEach((k) => {
             if (data[k] !== undefined) {
                 this[k] = data[k];
             }
@@ -235,6 +236,13 @@ class Class extends BaseClass {
         this.constructorCode = value;
         return this;
     }
+    setIsAbstract(value) {
+        if (_isNullOrUndefined(value)) {
+            value = false;
+        }
+        this.isAbstract = value;
+        return this;
+    }
     setIsBaseClass(value) {
         if (_isNullOrUndefined(value)) {
             value = true;
@@ -257,6 +265,9 @@ class Class extends BaseClass {
         super.toString(prettify);
 
         var s = [];
+        var a = (this.isAbstract === true)
+            ? ' abstract'
+            : '';
         var e = _isNullOrEmpty(this.extends) ? '' : ` extends ${this.extends}`;
         var i = (this.implements.length === 0)
             ? ''
@@ -266,7 +277,7 @@ class Class extends BaseClass {
             s.push(this.decorator.toString(prettify));
         }
 
-        s.push(`export class ${this.name}${e}${i}${this.space}{`);
+        s.push(`export${a} class ${this.name}${e}${i}${this.space}{`);
 
         var _ = (a, prettify) => {
             return this.formatStringArray(
@@ -659,6 +670,7 @@ class Method extends Base {
 
         this.args = [];
         this.body = 'return;';
+        this.isAbstract = false;
         this.modifier = Modifier.PUBLIC;
         this.name = '';
         this.static = false;
@@ -679,6 +691,20 @@ class Method extends Base {
         });
         this.args.push(p);
         return p;
+    }
+    setBody(value) {
+        if (_isNullOrUndefined(value)) {
+            value = 'return;';
+        }
+        this.body = value;
+        return this;
+    }
+    setIsAbstract(value) {
+        if (_isNullOrUndefined(value)) {
+            value = false;
+        }
+        this.isAbstract = value;
+        return this;
     }
     setStatic(value) {
         if (_isNullOrUndefined(value)) {
@@ -715,16 +741,28 @@ class Method extends Base {
         super.toString(prettify);
 
         var s = [];
+        var b = (this.isAbstract === true)
+            ? 'abstract '
+            : '';
         var t = this.static ? ' static' : '';
         var a = this.args
             .map((a_) => {
                 return a_.toArgString(prettify);
             })
             .join(`,${this.space}`);
+        var d = (this.isAbstract === true)
+            ? ''
+            : this.body;
+        var bl = (this.isAbstract === true)
+            ? ';'
+            : '{';
+        var br = (this.isAbstract === true)
+            ? ''
+            : '}';
 
-        s.push(`${this.tab}${this.modifier}${t} ${this.name}(${a}):${this.space}${this.type}${this.space}{`);
-        s.push(`${this.tab}${this.tab}${this.body}`);
-        s.push(`${this.tab}}`);
+        s.push(`${this.tab}${b}${this.modifier}${t} ${this.name}(${a}):${this.space}${this.type}${this.space}${bl}`);
+        s.push(`${this.tab}${this.tab}${d}`);
+        s.push(`${this.tab}${br}`);
 
         return this.formatStringArray(s, prettify);
     }
